@@ -1,0 +1,25 @@
+{
+  "name": "Ventrata Checkout Injector",
+  "version": "0.0.1",
+  "description": "Try Ventrata checkout everywhere",
+  "permissions": [
+    "background",
+    "storage",
+    "scripting",
+    "activeTab",
+    "tabs",
+    "clipboardRead",
+    "contextMenus"
+  ],
+  "host_permissions": ["http://*/*", "https://*/*"],
+  "action": {
+    "default_icon": {
+      "16": "assets/icon.png",
+      "24": "assets/icon.png",
+      "32": "assets/icon.png"
+    },
+    "default_title": "Ventrata Checkout Injector",
+    "default_popup": "index.html"
+  },
+  "manifest_version": 3
+}
