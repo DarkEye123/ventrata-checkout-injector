@@ -6,16 +6,13 @@
   "author": "Matej Leško <lesko.matej.pu@gmail.com>",
   "scripts": {
     "dev": "vite",
-    "init-extension": "mkdir dist 2>/dev/null; cp manifest.json ./dist; cp -r assets dist/;",
-    "build": "vite build; npm run init-extension;",
+    "build": "vite build",
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.json"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^2.4.5",
     "@tsconfig/svelte": "^5.0.2",
-    "esbuild": "^0.19.2",
-    "esbuild-plugin-eslint": "^0.3.6",
     "svelte": "^4.2.0",
     "svelte-check": "^3.5.1",
     "tslib": "^2.6.2",
