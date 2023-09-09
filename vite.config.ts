@@ -11,7 +11,7 @@ export default defineConfig({
     watch: {},
     lib: {
       entry: {
-        popup: "index.html",
+        popup: "src/Popup/index.html",
       },
       formats: ["es"],
     },

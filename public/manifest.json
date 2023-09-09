@@ -19,7 +19,7 @@
       "32": "assets/icon.png"
     },
     "default_title": "Ventrata Checkout Injector",
-    "default_popup": "index.html"
+    "default_popup": "src/Popup/index.html"
   },
   "manifest_version": 3
 }
