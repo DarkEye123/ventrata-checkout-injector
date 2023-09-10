@@ -35,4 +35,4 @@ function init() {
 
 console.log("content script");
 
-init();
+export default init;

@@ -1,4 +1,5 @@
 import { AppName } from "../types";
+import contentScriptInit from "../ContentScript/index";
 
 let popupPort: chrome.runtime.Port | null = null;
 let contentScriptPort: chrome.runtime.Port | null = null;
@@ -20,17 +21,18 @@ chrome.runtime.onConnect.addListener((port) => {
   }
 });
 
-chrome.action.onClicked.addListener((tab) => {
-  console.log("executing bg script");
-  chrome.scripting.executeScript({
-    target: { tabId: tab.id },
-    files: ["./contentScript.js"],
-  });
-});
-
 async function init() {
   const activeTabs = await chrome.tabs.query({
     active: true,
+  });
+
+  activeTabs.forEach((tab) => {
+    if (tab.id) {
+      chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        files: ["./contentScript.js"],
+      });
+    }
   });
 
   console.log("executing service worker script");
@@ -38,3 +40,4 @@ async function init() {
 }
 
 init();
+contentScriptInit();
