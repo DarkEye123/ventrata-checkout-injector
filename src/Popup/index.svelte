@@ -15,6 +15,10 @@
 
   let selectedAppVersion = SupportedAppTargetVersions[0].value;
   let isAppOverloadActive = false;
+
+  let currentlyActiveScript = document.querySelector(
+    'script[src="ventrata-checkout.min.js"]'
+  ) as HTMLScriptElement;
 </script>
 
 <main class="grid gap-2">
@@ -28,6 +32,9 @@
         {/each}
       </select>
     </label>
+  </section>
+  <section>
+    currently detected script: {currentlyActiveScript?.src}
   </section>
   <footer>
     <div>

@@ -1,7 +1,7 @@
 import "./app.css";
-import App from "./Popup.svelte";
+import Popup from "./index.svelte";
 
-const app = new App({
+const app = new Popup({
   target: document.getElementById("app"),
 });
 

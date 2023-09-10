@@ -12,6 +12,8 @@ export default defineConfig({
     lib: {
       entry: {
         popup: "src/Popup/index.html",
+        serviceWorker: "src/ServiceWorker/index.ts",
+        contentScript: "src/ContentScript/index.ts",
       },
       formats: ["es"],
     },

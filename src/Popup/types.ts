@@ -3,4 +3,4 @@ interface Option {
   text: string;
 }
 
-export { Option };
+export { type Option };

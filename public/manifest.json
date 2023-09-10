@@ -21,5 +21,8 @@
     "default_title": "Ventrata Checkout Injector",
     "default_popup": "src/Popup/index.html"
   },
+  "background": {
+    "service_worker": "serviceWorker.js"
+  },
   "manifest_version": 3
 }
