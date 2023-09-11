@@ -6,7 +6,7 @@ function messageHandler(
   message: InjectScriptMessage,
   port: chrome.runtime.Port
 ) {
-  console.log(port, message);
+  console.log(message);
   // switch (message.name) {
   //   case "create-note": {
   //     // colorizeSelection(port);
@@ -14,9 +14,13 @@ function messageHandler(
   // }
 }
 
+chrome.runtime.onMessage.addListener((message) => {
+  console.log("content script message", message);
+});
+
 function init() {
-  console.log("Ventrata Injector::content script init");
   if (!window.VentrataInjector?.contentScriptInjected) {
+    console.log("Ventrata Injector::content script init");
     window.VentrataInjector = window.VentrataInjector
       ? { ...window.VentrataInjector, contentScriptInjected: true }
       : { contentScriptInjected: true };

@@ -2,9 +2,9 @@ import { ScriptReference } from "../types";
 
 // ?ref=ventrata-injector-extension is needed for dynamic ruleset
 function injectScript(url?: string) {
-  const newURL =
-    `${url}${ScriptReference}` ||
-    `https://cdn.checkout.ventrata.com/v3/staging/ventrata-checkout.min.js${ScriptReference}`;
+  const newURL = url
+    ? `${url}${ScriptReference}`
+    : `https://cdn.checkout.ventrata.com/v3/staging/ventrata-checkout.min.js${ScriptReference}`;
 
   const originalScript = document.querySelector(
     'script[src="https://cdn.checkout.ventrata.com/v3/production/ventrata-checkout.min.js"]'

@@ -9,17 +9,34 @@ chrome.runtime.onConnect.addListener((port) => {
   if (port.name === AppName.Popup) {
     popupPort = port;
     console.log("popup open detected");
+    popupPort.postMessage({
+      contentScriptPort,
+    });
+    contentScriptPort?.postMessage({
+      popupPort,
+    });
     port.onDisconnect.addListener(() => {
       popupPort = null;
     });
   } else if (port.name.includes(AppName.ContentScript)) {
     console.log("content script detected");
+    contentScriptPort = port;
+    popupPort?.postMessage({
+      contentScriptPort,
+    });
+    contentScriptPort.postMessage({
+      popupPort,
+    });
     port.onDisconnect.addListener(() => {
       contentScriptPort = null;
     });
   } else {
     console.error("unknown sender ID detected");
   }
+});
+
+chrome.runtime.onMessage.addListener((message) => {
+  console.log("worker script message", message);
 });
 
 chrome.declarativeNetRequest.updateDynamicRules({

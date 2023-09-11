@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import { AppName } from "../types";
   import type { Option } from "./types";
   import clsx from "clsx";
@@ -24,6 +25,33 @@
   const port = chrome.runtime.connect({
     name: `${AppName.Popup}`,
   });
+
+  chrome.runtime.onMessage.addListener((message) => {
+    console.log("popup script message", message);
+  });
+
+  port.onMessage.addListener((message) => {
+    console.log("popup port script message", message);
+  });
+
+  onMount(async () => {
+    const activeTabs = await chrome.tabs.query({
+      active: true,
+    });
+    activeTabs.forEach((tab) => {
+      if (tab.id) {
+        chrome.tabs.sendMessage(tab.id, "hello from popup");
+      }
+    });
+  });
+
+  function triggerScriptReload() {
+    console.log("triggering");
+    chrome.runtime.sendMessage({
+      appVersion: selectedAppVersion,
+      isActive: isAppOverloadActive,
+    });
+  }
 </script>
 
 <main class="grid gap-2">
@@ -31,7 +59,7 @@
   <section>
     <label>
       Checkout version:
-      <select bind:value={selectedAppVersion}>
+      <select bind:value={selectedAppVersion} on:change={triggerScriptReload}>
         {#each SupportedAppTargetVersions as { value, text }}
           <option {value}> {text}</option>
         {/each}
