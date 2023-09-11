@@ -1,4 +1,4 @@
-import { AppName } from "../types";
+import { AppName, ScriptReference } from "../types";
 
 console.log("executing service worker script");
 
@@ -26,10 +26,24 @@ chrome.runtime.onConnect.addListener((port) => {
 //   console.log("window", window);
 // });
 
+chrome.declarativeNetRequest.getDynamicRules().then((data) => {
+  console.log(data);
+});
+
 chrome.declarativeNetRequest.updateDynamicRules({
+  removeRuleIds: [1, 2],
   addRules: [
     {
       id: 1,
+      action: {
+        type: chrome.declarativeNetRequest.RuleActionType.ALLOW,
+      },
+      condition: {
+        urlFilter: `https://cdn.checkout.ventrata.com/v3/production/ventrata-checkout.min.js${ScriptReference}`,
+      },
+    },
+    {
+      id: 2,
       action: {
         type: chrome.declarativeNetRequest.RuleActionType.BLOCK,
       },
@@ -39,6 +53,10 @@ chrome.declarativeNetRequest.updateDynamicRules({
       },
     },
   ],
+});
+
+chrome.declarativeNetRequest.getDynamicRules().then((data) => {
+  console.log(data);
 });
 
 async function init() {

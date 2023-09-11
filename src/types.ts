@@ -8,4 +8,6 @@ interface GenericMessage {
   payload?: unknown;
 }
 
-export { AppName, type GenericMessage };
+const ScriptReference = "?ref=ventrata-injector-extension";
+
+export { AppName, type GenericMessage, ScriptReference };
