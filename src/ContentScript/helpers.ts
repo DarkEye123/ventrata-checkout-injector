@@ -19,14 +19,4 @@ function injectScript() {
   }
 }
 
-let oldFetch: typeof window.fetch;
-
-function injectFetch(originalFetch: typeof window.fetch) {
-  oldFetch = oldFetch;
-  window.fetch = (...input) => {
-    console.log("custom Fetch");
-    return oldFetch(...input);
-  };
-}
-
-export { injectScript, injectFetch };
+export { injectScript };

@@ -1,5 +1,5 @@
 import { AppName } from "../types";
-import { injectFetch, injectScript } from "./helpers";
+import { injectScript } from "./helpers";
 import type { InjectScriptMessage } from "./types";
 
 function messageHandler(
@@ -41,5 +41,4 @@ function init() {
   }
 }
 
-injectFetch(window.fetch);
 init();
