@@ -4,6 +4,7 @@
   "description": "Try Ventrata checkout everywhere",
   "permissions": [
     "background",
+    "declarativeNetRequest",
     "storage",
     "scripting",
     "activeTab",
