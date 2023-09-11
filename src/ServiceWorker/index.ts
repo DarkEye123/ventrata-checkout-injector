@@ -22,16 +22,8 @@ chrome.runtime.onConnect.addListener((port) => {
   }
 });
 
-// chrome.runtime.getBackgroundPage((window) => {
-//   console.log("window", window);
-// });
-
-chrome.declarativeNetRequest.getDynamicRules().then((data) => {
-  console.log(data);
-});
-
 chrome.declarativeNetRequest.updateDynamicRules({
-  removeRuleIds: [1, 2],
+  removeRuleIds: [1, 2], // these are persisted even service worker is reloaded, thus cleanup
   addRules: [
     {
       id: 1,
@@ -53,10 +45,6 @@ chrome.declarativeNetRequest.updateDynamicRules({
       },
     },
   ],
-});
-
-chrome.declarativeNetRequest.getDynamicRules().then((data) => {
-  console.log(data);
 });
 
 async function init() {
