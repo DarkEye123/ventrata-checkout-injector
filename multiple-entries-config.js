@@ -7,11 +7,11 @@ import { svelte } from "@sveltejs/vite-plugin-svelte";
 const svelteConfig = defineConfig({
   plugins: [svelte()],
   build: {
+    emptyOutDir: false,
     watch: {},
     lib: {
       entry: {
         popup: "src/Popup/index.html",
-        contentScript: "src/ContentScript/index.ts",
       },
       formats: ["es"],
     },
@@ -20,6 +20,7 @@ const svelteConfig = defineConfig({
 
 const workerConfig = defineConfig({
   build: {
+    emptyOutDir: false,
     watch: {},
     rollupOptions: {
       output: {
@@ -30,11 +31,31 @@ const workerConfig = defineConfig({
       entry: {
         serviceWorker: "src/ServiceWorker/index.ts",
       },
-      name: "worker",
+      name: "serviceWorker",
+      formats: ["iife"],
+    },
+  },
+});
+
+const contentScript = defineConfig({
+  build: {
+    emptyOutDir: false,
+    watch: {},
+    rollupOptions: {
+      output: {
+        entryFileNames: "contentScript.js",
+      },
+    },
+    lib: {
+      entry: {
+        contentScript: "src/ContentScript/index.ts",
+      },
+      name: "contentScript",
       formats: ["iife"],
     },
   },
 });
 
 build({ ...svelteConfig, configFile: false });
+build({ ...contentScript, configFile: false });
 build({ ...workerConfig, configFile: false });
