@@ -1,5 +1,4 @@
 import { AppName } from "../types";
-import { unregisterAllDynamicContentScripts } from "./helpers";
 
 console.log("executing service worker script");
 
@@ -21,6 +20,25 @@ chrome.runtime.onConnect.addListener((port) => {
   } else {
     console.error("unknown sender ID detected");
   }
+});
+
+// chrome.runtime.getBackgroundPage((window) => {
+//   console.log("window", window);
+// });
+
+chrome.declarativeNetRequest.updateDynamicRules({
+  addRules: [
+    {
+      id: 1,
+      action: {
+        type: chrome.declarativeNetRequest.RuleActionType.BLOCK,
+      },
+      condition: {
+        urlFilter:
+          "https://cdn.checkout.ventrata.com/v3/production/ventrata-checkout.min.js",
+      },
+    },
+  ],
 });
 
 async function init() {

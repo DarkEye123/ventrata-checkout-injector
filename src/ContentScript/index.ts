@@ -1,10 +1,12 @@
 import { AppName } from "../types";
+import { injectFetch, injectScript } from "./helpers";
 import type { InjectScriptMessage } from "./types";
 
 function messageHandler(
   message: InjectScriptMessage,
   port: chrome.runtime.Port
 ) {
+  console.log(port, message);
   // switch (message.name) {
   //   case "create-note": {
   //     // colorizeSelection(port);
@@ -18,6 +20,7 @@ function init() {
     window.VentrataInjector = window.VentrataInjector
       ? { ...window.VentrataInjector, contentScriptInjected: true }
       : { contentScriptInjected: true };
+
     const port = chrome.runtime.connect({
       name: `${AppName.ContentScript}`,
     });
@@ -25,6 +28,8 @@ function init() {
     console.log("Ventrata Injector::content script connected");
 
     port.onMessage.addListener(messageHandler);
+
+    injectScript();
 
     port.onDisconnect.addListener(() => {
       console.log("Ventrata Injector::content script disconnected");
@@ -36,4 +41,5 @@ function init() {
   }
 }
 
+injectFetch(window.fetch);
 init();

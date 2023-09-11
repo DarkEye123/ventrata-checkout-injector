@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { AppName } from "../types";
   import type { Option } from "./types";
   import clsx from "clsx";
 
@@ -19,6 +20,10 @@
   let currentlyActiveScript = document.querySelector(
     'script[src="ventrata-checkout.min.js"]'
   ) as HTMLScriptElement;
+
+  const port = chrome.runtime.connect({
+    name: `${AppName.Popup}`,
+  });
 </script>
 
 <main class="grid gap-2">
