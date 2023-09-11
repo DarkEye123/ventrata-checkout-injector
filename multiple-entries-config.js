@@ -11,27 +11,30 @@ const svelteConfig = defineConfig({
     lib: {
       entry: {
         popup: "src/Popup/index.html",
-      },
-      formats: ["es"],
-    },
-  },
-});
-const workerConfig = defineConfig({
-  build: {
-    watch: {},
-    lib: {
-      entry: {
-        serviceWorker: "src/ServiceWorker/index.ts",
         contentScript: "src/ContentScript/index.ts",
       },
       formats: ["es"],
     },
   },
 });
-// console.log(svelteConfig);
-const test = build({ ...svelteConfig, configFile: false });
-const test2 = build({ ...workerConfig, configFile: false });
-// return test;
-// return svelteConfig;
-// build(workerConfig);
-// return {};
+
+const workerConfig = defineConfig({
+  build: {
+    watch: {},
+    rollupOptions: {
+      output: {
+        entryFileNames: "serviceWorker.js",
+      },
+    },
+    lib: {
+      entry: {
+        serviceWorker: "src/ServiceWorker/index.ts",
+      },
+      name: "worker",
+      formats: ["iife"],
+    },
+  },
+});
+
+build({ ...svelteConfig, configFile: false });
+build({ ...workerConfig, configFile: false });
