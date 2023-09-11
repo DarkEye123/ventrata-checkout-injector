@@ -13,7 +13,7 @@ function messageHandler(
 }
 
 function init() {
-  console.log("content script");
+  console.log("Ventrata Injector::content script init");
   if (!window.VentrataInjector?.contentScriptInjected) {
     window.VentrataInjector = window.VentrataInjector
       ? { ...window.VentrataInjector, contentScriptInjected: true }
@@ -22,9 +22,12 @@ function init() {
       name: `${AppName.ContentScript}`,
     });
 
+    console.log("Ventrata Injector::content script connected");
+
     port.onMessage.addListener(messageHandler);
 
     port.onDisconnect.addListener(() => {
+      console.log("Ventrata Injector::content script disconnected");
       window.VentrataInjector = window.VentrataInjector ?? {
         contentScriptInjected: false,
       };
@@ -33,6 +36,4 @@ function init() {
   }
 }
 
-console.log("content script");
-
-export default init;
+init();

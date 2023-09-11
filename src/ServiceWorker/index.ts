@@ -1,5 +1,7 @@
 import { AppName } from "../types";
-import contentScriptInit from "../ContentScript/index";
+import { unregisterAllDynamicContentScripts } from "./helpers";
+
+console.log("executing service worker script");
 
 let popupPort: chrome.runtime.Port | null = null;
 let contentScriptPort: chrome.runtime.Port | null = null;
@@ -26,7 +28,22 @@ async function init() {
     active: true,
   });
 
-  activeTabs.forEach((tab) => {
+  chrome.tabs.onActivated.addListener(async (tab) => {
+    const { tabId } = tab;
+    chrome.scripting.executeScript({
+      target: { tabId },
+      files: ["./contentScript.js"],
+    });
+  });
+
+  chrome.tabs.onUpdated.addListener(async (tab) => {
+    chrome.scripting.executeScript({
+      target: { tabId: tab },
+      files: ["./contentScript.js"],
+    });
+  });
+
+  activeTabs.forEach(async (tab) => {
     if (tab.id) {
       chrome.scripting.executeScript({
         target: { tabId: tab.id },
@@ -34,10 +51,6 @@ async function init() {
       });
     }
   });
-
-  console.log("executing service worker script");
-  console.log(activeTabs);
 }
 
 init();
-contentScriptInit();
