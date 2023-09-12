@@ -1,14 +1,36 @@
-import { AppName, ScriptReference } from "../types";
+import { AppName, type AppMessage } from "../types";
 
 console.log("executing service worker script");
 
 let popupPort: chrome.runtime.Port | null = null;
 let contentScriptPort: chrome.runtime.Port | null = null;
 
+let appState: AppMessage["payload"] = {
+  appVersion: "staging",
+  isActive: true,
+};
+
+function handlePopupMessages(message: AppMessage) {
+  console.log("received popup message", message);
+  switch (message.name) {
+    case "app-state": {
+      appState = { ...message.payload };
+      break;
+    }
+    default: {
+      console.error("unknown message received");
+    }
+  }
+}
+
+// TODO rethink if it is really needed to update popup and content script by their ports, it seems that it is not needed at the end
 chrome.runtime.onConnect.addListener((port) => {
   if (port.name === AppName.Popup) {
     popupPort = port;
     console.log("popup open detected");
+    const message: AppMessage = { name: "app-state", payload: appState };
+    console.log("sending", message);
+    popupPort.postMessage(message);
     popupPort.postMessage({
       contentScriptPort,
     });
@@ -16,8 +38,10 @@ chrome.runtime.onConnect.addListener((port) => {
       popupPort,
     });
     port.onDisconnect.addListener(() => {
+      popupPort?.onMessage.removeListener(handlePopupMessages);
       popupPort = null;
     });
+    popupPort.onMessage.addListener(handlePopupMessages);
   } else if (port.name.includes(AppName.ContentScript)) {
     console.log("content script detected");
     contentScriptPort = port;
@@ -37,31 +61,6 @@ chrome.runtime.onConnect.addListener((port) => {
 
 chrome.runtime.onMessage.addListener((message) => {
   console.log("worker script message", message);
-});
-
-chrome.declarativeNetRequest.updateDynamicRules({
-  removeRuleIds: [1, 2], // these are persisted even service worker is reloaded, thus cleanup
-  addRules: [
-    {
-      id: 1,
-      action: {
-        type: chrome.declarativeNetRequest.RuleActionType.ALLOW,
-      },
-      condition: {
-        urlFilter: `https://cdn.checkout.ventrata.com/v3/production/ventrata-checkout.min.js${ScriptReference}`,
-      },
-    },
-    {
-      id: 2,
-      action: {
-        type: chrome.declarativeNetRequest.RuleActionType.BLOCK,
-      },
-      condition: {
-        urlFilter:
-          "https://cdn.checkout.ventrata.com/v3/production/ventrata-checkout.min.js",
-      },
-    },
-  ],
 });
 
 async function init() {

@@ -1,8 +1,9 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { AppName } from "../types";
+  import { AppName, type AppMessage } from "../types";
   import type { Option } from "./types";
   import clsx from "clsx";
+  import { sendMessage } from "./helpers";
 
   const SupportedAppTargetVersions: Option[] = [
     {
@@ -26,30 +27,27 @@
     name: `${AppName.Popup}`,
   });
 
-  chrome.runtime.onMessage.addListener((message) => {
-    console.log("popup script message", message);
-  });
-
-  port.onMessage.addListener((message) => {
+  port.onMessage.addListener((message: AppMessage) => {
     console.log("popup port script message", message);
-  });
-
-  onMount(async () => {
-    const activeTabs = await chrome.tabs.query({
-      active: true,
-    });
-    activeTabs.forEach((tab) => {
-      if (tab.id) {
-        chrome.tabs.sendMessage(tab.id, "hello from popup");
+    switch (message.name) {
+      case "app-state": {
+        selectedAppVersion = message.payload.appVersion;
+        isAppOverloadActive = message.payload.isActive;
+        break;
       }
-    });
+      default: {
+        console.error("unknown message detected");
+      }
+    }
   });
 
-  function triggerScriptReload() {
-    console.log("triggering");
-    chrome.runtime.sendMessage({
-      appVersion: selectedAppVersion,
-      isActive: isAppOverloadActive,
+  function triggerAppStateUpdate() {
+    sendMessage(port, {
+      name: "app-state",
+      payload: {
+        appVersion: selectedAppVersion,
+        isActive: isAppOverloadActive,
+      },
     });
   }
 </script>
@@ -59,7 +57,7 @@
   <section>
     <label>
       Checkout version:
-      <select bind:value={selectedAppVersion} on:change={triggerScriptReload}>
+      <select bind:value={selectedAppVersion} on:change={triggerAppStateUpdate}>
         {#each SupportedAppTargetVersions as { value, text }}
           <option {value}> {text}</option>
         {/each}
@@ -77,8 +75,10 @@
           "bg-green-200": isAppOverloadActive,
           "bg-red-200": !isAppOverloadActive,
         })}
-        on:click={() => (isAppOverloadActive = !isAppOverloadActive)}
-        >{isAppOverloadActive ? "enabled" : "disabled"}</button
+        on:click={() => {
+          isAppOverloadActive = !isAppOverloadActive;
+          triggerAppStateUpdate();
+        }}>{isAppOverloadActive ? "enabled" : "disabled"}</button
       >
     </div>
   </footer>
