@@ -1,6 +1,6 @@
 import { ScriptReference } from "../types";
 
-// ?ref=ventrata-injector-extension is needed for dynamic ruleset
+// ScriptReference is needed for dynamic ruleset
 function injectScript(url?: string) {
   const newURL = url
     ? `${url}${ScriptReference}`
