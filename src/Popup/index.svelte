@@ -16,11 +16,9 @@
   ];
 
   let selectedAppVersion = SupportedAppTargetVersions[0].value;
+  let customAppVersion: number | null = null;
   let isAppOverloadActive = false;
-
-  let currentlyActiveScript = document.querySelector(
-    'script[src="ventrata-checkout.min.js"]',
-  ) as HTMLScriptElement;
+  let saveTriggered = false;
 
   const port = chrome.runtime.connect({
     name: `${AppName.Popup}`,
@@ -40,12 +38,38 @@
     }
   });
 
-  function triggerAppStateUpdate() {
+  const handleOnVersionSelect = () => {
+    if (selectedAppVersion !== String(customAppVersion)) {
+      customAppVersion = null;
+    }
+    triggerAppStateUpdate();
+  };
+
+  const handleOnCustomAppVersionInput: (event: {
+    currentTarget: HTMLInputElement;
+  }) => void = ({ currentTarget }) => {
+    if (String(customAppVersion) !== currentTarget.value) {
+      customAppVersion = Number(currentTarget.value);
+      triggerAppStateUpdate();
+    }
+  };
+
+  const triggerAppStateUpdate = () => {
+    const prefixedCustomAppVersion = customAppVersion
+      ? `pr/${customAppVersion}`
+      : null;
     sendStateMessage(port, {
-      appVersion: selectedAppVersion,
+      appVersion: prefixedCustomAppVersion || selectedAppVersion,
       isActive: isAppOverloadActive,
     });
-  }
+  };
+
+  const handleAppConfigurationSave = () => {
+    saveTriggered = true;
+    setTimeout(() => {
+      saveTriggered = false;
+    }, 1000); // visual UX feedback
+  };
 </script>
 
 <main class="grid gap-2">
@@ -53,7 +77,7 @@
   <section>
     <label>
       Checkout version:
-      <select bind:value={selectedAppVersion} on:change={triggerAppStateUpdate}>
+      <select bind:value={selectedAppVersion} on:change={handleOnVersionSelect}>
         {#each SupportedAppTargetVersions as { value, text }}
           <option {value}> {text}</option>
         {/each}
@@ -61,7 +85,18 @@
     </label>
   </section>
   <section>
-    currently detected script: {currentlyActiveScript?.src}
+    <label>
+      set your PR version manually
+      <input
+        type="number"
+        on:blur={handleOnCustomAppVersionInput}
+        on:keydown={(event) => {
+          if (event.key === "Enter") {
+            handleOnCustomAppVersionInput(event);
+          }
+        }}
+      />
+    </label>
   </section>
   <footer>
     <div>
@@ -76,6 +111,17 @@
           triggerAppStateUpdate();
         }}>{isAppOverloadActive ? "enabled" : "disabled"}</button
       >
+    </div>
+    <div class="grid grid-cols-2">
+      <button on:click={handleAppConfigurationSave}>Save configuration</button>
+      <div
+        class={clsx("animate-ping", {
+          visible: saveTriggered,
+          invisible: !saveTriggered,
+        })}
+      >
+        Configuration saved!
+      </div>
     </div>
   </footer>
 </main>
