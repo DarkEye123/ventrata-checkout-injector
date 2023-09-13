@@ -3,7 +3,7 @@
   import { AppName, type AppMessage } from "../types";
   import type { Option } from "./types";
   import clsx from "clsx";
-  import { sendMessage } from "./helpers";
+  import { sendMessage, sendStateMessage } from "./helpers";
 
   const SupportedAppTargetVersions: Option[] = [
     {
@@ -42,12 +42,9 @@
   });
 
   function triggerAppStateUpdate() {
-    sendMessage(port, {
-      name: "app-state",
-      payload: {
-        appVersion: selectedAppVersion,
-        isActive: isAppOverloadActive,
-      },
+    sendStateMessage(port, {
+      appVersion: selectedAppVersion,
+      isActive: isAppOverloadActive,
     });
   }
 </script>

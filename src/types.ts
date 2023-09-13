@@ -20,4 +20,10 @@ type AppMessage = StateMessage;
 
 const ScriptReference = "?ref=ventrata-injector-extension";
 
-export { AppName, type GenericMessage, ScriptReference, type AppMessage };
+export {
+  AppName,
+  type GenericMessage,
+  ScriptReference,
+  type AppMessage,
+  type StateMessage,
+};

@@ -1,4 +1,5 @@
-import { ScriptReference } from "../types";
+import { ScriptReference, type StateMessage } from "../types";
+import { appState } from "./state";
 
 async function unregisterAllDynamicContentScripts() {
   try {
@@ -44,4 +45,12 @@ function updateRules(applyAppRules: boolean) {
   });
 }
 
-export { unregisterAllDynamicContentScripts, updateRules };
+function updateContentScript(
+  port: chrome.runtime.Port,
+  newState: StateMessage["payload"]
+) {
+  const stateMessage: StateMessage = { name: "app-state", payload: newState };
+  port.postMessage(stateMessage);
+}
+
+export { unregisterAllDynamicContentScripts, updateRules, updateContentScript };

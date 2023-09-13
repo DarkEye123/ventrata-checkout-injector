@@ -1,15 +1,15 @@
-import type { AppMessage } from "../types";
+import type { AppMessage, StateMessage } from "../types";
 
-async function sendMessage(port: chrome.runtime.Port, message: AppMessage) {
-  const activeTabs = await chrome.tabs.query({
-    active: true,
-  });
-  activeTabs.forEach((tab) => {
-    if (tab.id) {
-      chrome.tabs.sendMessage(tab.id, message);
-    }
-  });
+function sendStateMessage(
+  port: chrome.runtime.Port,
+  payload: StateMessage["payload"]
+) {
+  const stateMessage: StateMessage = { name: "app-state", payload };
+  sendMessage(port, stateMessage);
+}
+
+function sendMessage(port: chrome.runtime.Port, message: AppMessage) {
   port.postMessage(message);
 }
 
-export { sendMessage };
+export { sendMessage, sendStateMessage };

@@ -1,20 +1,18 @@
 import { AppName, type AppMessage } from "../types";
+import { updateRules } from "./helpers";
+import { createStateMessage, updateAppState } from "./state";
 
 console.log("executing service worker script");
 
 let popupPort: chrome.runtime.Port | null = null;
 let contentScriptPort: chrome.runtime.Port | null = null;
 
-let appState: AppMessage["payload"] = {
-  appVersion: "staging",
-  isActive: true,
-};
-
 function handlePopupMessages(message: AppMessage) {
   console.log("received popup message", message);
   switch (message.name) {
     case "app-state": {
-      appState = { ...message.payload };
+      updateAppState(message.payload);
+      updateRules(message.payload.isActive);
       break;
     }
     default: {
@@ -25,12 +23,11 @@ function handlePopupMessages(message: AppMessage) {
 
 // TODO rethink if it is really needed to update popup and content script by their ports, it seems that it is not needed at the end
 chrome.runtime.onConnect.addListener((port) => {
+  const stateMessage = createStateMessage();
   if (port.name === AppName.Popup) {
     popupPort = port;
     console.log("popup open detected");
-    const message: AppMessage = { name: "app-state", payload: appState };
-    console.log("sending", message);
-    popupPort.postMessage(message);
+    popupPort.postMessage(stateMessage);
     popupPort.postMessage({
       contentScriptPort,
     });
@@ -51,6 +48,7 @@ chrome.runtime.onConnect.addListener((port) => {
     contentScriptPort.postMessage({
       popupPort,
     });
+    contentScriptPort.postMessage(stateMessage);
     port.onDisconnect.addListener(() => {
       contentScriptPort = null;
     });
