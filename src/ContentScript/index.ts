@@ -1,17 +1,14 @@
-import { AppName } from "../types";
+import { AppName, type AppMessage } from "../types";
 import { injectScript } from "./helpers";
-import type { InjectScriptMessage } from "./types";
 
-function messageHandler(
-  message: InjectScriptMessage,
-  port: chrome.runtime.Port
-) {
-  console.log(message);
-  // switch (message.name) {
-  //   case "create-note": {
-  //     // colorizeSelection(port);
-  //   }
-  // }
+function messageHandler(message: AppMessage) {
+  switch (message.name) {
+    case "app-state": {
+      if (message.payload.isActive) {
+        injectScript(message.payload.appVersion);
+      }
+    }
+  }
 }
 
 chrome.runtime.onMessage.addListener((message) => {
@@ -32,8 +29,6 @@ function init() {
     console.log("Ventrata Injector::content script connected");
 
     port.onMessage.addListener(messageHandler);
-
-    injectScript();
 
     port.onDisconnect.addListener(() => {
       console.log("Ventrata Injector::content script disconnected");

@@ -1,10 +1,9 @@
 import { ScriptReference } from "../types";
 
 // ScriptReference is needed for dynamic ruleset
-function injectScript(url?: string) {
-  const newURL = url
-    ? `${url}${ScriptReference}`
-    : `https://cdn.checkout.ventrata.com/v3/staging/ventrata-checkout.min.js${ScriptReference}`;
+function injectScript(version?: string) {
+  const _version = version ?? "staging";
+  const newURL = `https://cdn.checkout.ventrata.com/v3/${_version}/ventrata-checkout.min.js${ScriptReference}`;
 
   const originalScript = document.querySelector(
     'script[src="https://cdn.checkout.ventrata.com/v3/production/ventrata-checkout.min.js"]'
