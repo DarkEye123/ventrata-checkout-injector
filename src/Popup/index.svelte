@@ -76,44 +76,52 @@
   };
 </script>
 
-<main class="grid gap-2">
+<main class="grid gap-6">
   <h1>Ventrata Checkout Injector</h1>
-  <section>
-    <label>
-      Checkout version:
-      <select bind:value={selectedAppVersion} on:change={handleOnVersionSelect}>
+  <div class="grid gap-6 rounded-lg border border-gray-200 p-4">
+    <section class="grid justify-items-center gap-2">
+      <label for="appVersionSelect"> Checkout version </label>
+      <select
+        id="appVersionSelect"
+        bind:value={selectedAppVersion}
+        on:change={handleOnVersionSelect}
+        class="w-3/4"
+      >
         {#each SupportedAppTargetVersions as { value, text }}
           <option {value}> {text}</option>
         {/each}
       </select>
-    </label>
-  </section>
-  <section>
-    <label>
-      set your PR version manually
-      <input
-        type="number"
-        on:blur={handleOnCustomAppVersionInput}
-        on:keydown={(event) => {
-          if (event.key === "Enter") {
-            handleOnCustomAppVersionInput(event);
-          }
-        }}
-      />
-    </label>
-  </section>
-  <footer class="grid gap-6">
-    <div>
-      <span>Extension is:</span>
+    </section>
+    <h2 class="text-2xl font-bold">— OR —</h2>
+    <section>
+      <label>
+        set your PR version manually
+        <input
+          type="number"
+          on:blur={handleOnCustomAppVersionInput}
+          on:keydown={(event) => {
+            if (event.key === "Enter") {
+              handleOnCustomAppVersionInput(event);
+            }
+          }}
+        />
+      </label>
+    </section>
+  </div>
+  <footer class="grid gap-4">
+    <div class="flex items-center justify-between">
       <button
-        class={clsx({
+        class={clsx("w-full", {
           "bg-green-200": isAppOverloadActive,
           "bg-red-200": !isAppOverloadActive,
         })}
         on:click={() => {
           isAppOverloadActive = !isAppOverloadActive;
           triggerAppStateUpdate();
-        }}>{isAppOverloadActive ? "enabled" : "disabled"}</button
+        }}
+        ><span>Extension is:</span><span class="ml-4 text-lg font-bold"
+          >{isAppOverloadActive ? "enabled" : "disabled"}</span
+        ></button
       >
     </div>
     <div class="relative grid gap-4">
