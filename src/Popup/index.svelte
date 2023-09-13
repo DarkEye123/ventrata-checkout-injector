@@ -1,9 +1,8 @@
 <script lang="ts">
-  import { onMount } from "svelte";
   import { AppName, type AppMessage } from "../types";
   import type { Option } from "./types";
   import clsx from "clsx";
-  import { sendMessage, sendStateMessage } from "./helpers";
+  import { sendStateMessage } from "./helpers";
 
   const SupportedAppTargetVersions: Option[] = [
     {
@@ -20,7 +19,7 @@
   let isAppOverloadActive = false;
 
   let currentlyActiveScript = document.querySelector(
-    'script[src="ventrata-checkout.min.js"]'
+    'script[src="ventrata-checkout.min.js"]',
   ) as HTMLScriptElement;
 
   const port = chrome.runtime.connect({

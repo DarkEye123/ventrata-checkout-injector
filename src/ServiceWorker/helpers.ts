@@ -1,20 +1,4 @@
 import { ScriptReference, type StateMessage } from "../types";
-import { appState } from "./state";
-
-async function unregisterAllDynamicContentScripts() {
-  try {
-    const scripts = await chrome.scripting.getRegisteredContentScripts();
-    const scriptIds = scripts.map((script) => script);
-    console.log(scriptIds);
-    // return chrome.scripting.unregisterContentScripts(scriptIds);
-  } catch (error) {
-    const message = [
-      "An unexpected error occurred while",
-      "unregistering dynamic content scripts.",
-    ].join(" ");
-    throw new Error(message, { cause: error });
-  }
-}
 
 function updateRules(applyAppRules: boolean) {
   chrome.declarativeNetRequest.updateDynamicRules({
@@ -47,10 +31,10 @@ function updateRules(applyAppRules: boolean) {
 
 function updateContentScript(
   port: chrome.runtime.Port,
-  newState: StateMessage["payload"]
+  newState: StateMessage["payload"],
 ) {
   const stateMessage: StateMessage = { name: "app-state", payload: newState };
   port.postMessage(stateMessage);
 }
 
-export { unregisterAllDynamicContentScripts, updateRules, updateContentScript };
+export { updateRules, updateContentScript };
