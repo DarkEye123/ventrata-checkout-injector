@@ -1,6 +1,9 @@
 import { defineConfig, build } from "vite";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
 
+const args = process.argv.slice(2);
+const watch = !!args.find((arg) => arg.match(/(-w)|(--watch)/));
+
 // https://vitejs.dev/config/
 // manifest is copied to 'dist' because of https://vitejs.dev/config/shared-options.html#publicdir
 
@@ -8,7 +11,7 @@ const svelteConfig = defineConfig({
   plugins: [svelte()],
   build: {
     emptyOutDir: false,
-    watch: {},
+    watch: watch ? {} : null,
     lib: {
       entry: {
         popup: "src/Popup/index.html",
@@ -21,7 +24,7 @@ const svelteConfig = defineConfig({
 const workerConfig = defineConfig({
   build: {
     emptyOutDir: false,
-    watch: {},
+    watch: watch ? {} : null,
     rollupOptions: {
       output: {
         entryFileNames: "serviceWorker.js",
@@ -40,7 +43,7 @@ const workerConfig = defineConfig({
 const contentScript = defineConfig({
   build: {
     emptyOutDir: false,
-    watch: {},
+    watch: watch ? {} : null,
     rollupOptions: {
       output: {
         entryFileNames: "contentScript.js",
