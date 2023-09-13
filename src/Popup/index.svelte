@@ -6,13 +6,16 @@
   import { fade } from "svelte/transition";
   import Checkmark from "./icons/Checkmark.svelte";
 
+  const Staging = "staging";
+  const Production = "production";
+
   const SupportedAppTargetVersions: Option[] = [
     {
-      value: "staging",
+      value: Staging,
       text: "Staging",
     },
     {
-      value: "production",
+      value: Production,
       text: "Production",
     },
   ];
@@ -31,7 +34,10 @@
     console.log("popup port script message", message);
     switch (message.name) {
       case "app-state": {
-        if (message.payload.appVersion.startsWith("pr")) {
+        if (
+          message.payload.appVersion.startsWith("pr") &&
+          message.payload.appVersion !== "Production"
+        ) {
           const versionPart = message.payload.appVersion.split("/")[1];
           customAppVersion = Number(versionPart);
           customAppVersionInput.value = versionPart;
