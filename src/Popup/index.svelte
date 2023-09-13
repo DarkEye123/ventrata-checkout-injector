@@ -2,7 +2,9 @@
   import { AppName, type AppMessage } from "../types";
   import type { Option } from "./types";
   import clsx from "clsx";
-  import { sendStateMessage } from "./helpers";
+  import { sendSaveAppStateMessage, sendStateMessage } from "./helpers";
+  import { fade } from "svelte/transition";
+  import Checkmark from "./icons/Checkmark.svelte";
 
   const SupportedAppTargetVersions: Option[] = [
     {
@@ -69,6 +71,8 @@
     setTimeout(() => {
       saveTriggered = false;
     }, 1000); // visual UX feedback
+
+    sendSaveAppStateMessage(port);
   };
 </script>
 
@@ -98,7 +102,7 @@
       />
     </label>
   </section>
-  <footer>
+  <footer class="grid gap-6">
     <div>
       <span>Extension is:</span>
       <button
@@ -112,16 +116,18 @@
         }}>{isAppOverloadActive ? "enabled" : "disabled"}</button
       >
     </div>
-    <div class="grid grid-cols-2">
-      <button on:click={handleAppConfigurationSave}>Save configuration</button>
-      <div
-        class={clsx("animate-ping", {
-          visible: saveTriggered,
-          invisible: !saveTriggered,
-        })}
+    <div class="relative grid gap-4">
+      <button on:click={handleAppConfigurationSave}
+        >{saveTriggered ? "Configuration Saved" : "Save configuration"}</button
       >
-        Configuration saved!
-      </div>
+      {#if saveTriggered}
+        <div
+          transition:fade
+          class="absolute bottom-1/2 right-2 h-4 w-4 translate-y-1/2"
+        >
+          <Checkmark></Checkmark>
+        </div>
+      {/if}
     </div>
   </footer>
 </main>

@@ -16,7 +16,11 @@ interface StateMessage extends GenericMessage {
   };
 }
 
-type AppMessage = StateMessage;
+interface SaveAppStateMessage extends GenericMessage {
+  name: "save-app-state";
+}
+
+type AppMessage = StateMessage | SaveAppStateMessage;
 
 const ScriptReference = "?ref=ventrata-injector-extension";
 
@@ -26,4 +30,5 @@ export {
   ScriptReference,
   type AppMessage,
   type StateMessage,
+  type SaveAppStateMessage,
 };

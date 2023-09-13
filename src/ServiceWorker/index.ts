@@ -1,6 +1,6 @@
 import { AppName, type AppMessage } from "../types";
 import { updateRules } from "./helpers";
-import { createStateMessage, updateAppState } from "./state";
+import { appState, createStateMessage, updateAppState } from "./state";
 
 console.log("executing service worker script");
 
@@ -14,6 +14,10 @@ function handlePopupMessages(message: AppMessage) {
       updateAppState(message.payload);
       updateRules(message.payload.isActive);
       chrome.tabs.reload();
+      break;
+    }
+    case "save-app-state": {
+      chrome.storage.local.set({ appState });
       break;
     }
     default: {

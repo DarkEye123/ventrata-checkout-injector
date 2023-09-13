@@ -5,6 +5,12 @@ let appState: StateMessage["payload"] = {
   isActive: true,
 };
 
+chrome.storage.local.get("appState", (value) => {
+  if (value.appState) {
+    appState = value.appState as typeof appState;
+  }
+});
+
 function createStateMessage(): StateMessage {
   return { name: "app-state", payload: appState };
 }
