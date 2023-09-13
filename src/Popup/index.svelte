@@ -36,7 +36,7 @@
       case "app-state": {
         if (
           message.payload.appVersion.startsWith("pr") &&
-          message.payload.appVersion !== "Production"
+          message.payload.appVersion !== Production
         ) {
           const versionPart = message.payload.appVersion.split("/")[1];
           customAppVersion = Number(versionPart);
