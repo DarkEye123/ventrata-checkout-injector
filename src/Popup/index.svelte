@@ -17,10 +17,11 @@
     },
   ];
 
-  let selectedAppVersion = SupportedAppTargetVersions[0].value;
+  let selectedAppVersion: string = SupportedAppTargetVersions[0].value;
   let customAppVersion: number | null = null;
   let isAppOverloadActive = false;
   let saveTriggered = false;
+  let customAppVersionInput: HTMLInputElement;
 
   const port = chrome.runtime.connect({
     name: `${AppName.Popup}`,
@@ -30,7 +31,14 @@
     console.log("popup port script message", message);
     switch (message.name) {
       case "app-state": {
-        selectedAppVersion = message.payload.appVersion;
+        if (message.payload.appVersion.startsWith("pr")) {
+          const versionPart = message.payload.appVersion.split("/")[1];
+          customAppVersion = Number(versionPart);
+          customAppVersionInput.value = versionPart;
+          selectedAppVersion = "";
+        } else {
+          selectedAppVersion = message.payload.appVersion;
+        }
         isAppOverloadActive = message.payload.isActive;
         break;
       }
@@ -43,6 +51,7 @@
   const handleOnVersionSelect = () => {
     if (selectedAppVersion !== String(customAppVersion)) {
       customAppVersion = null;
+      customAppVersionInput.value = "";
     }
     triggerAppStateUpdate();
   };
@@ -97,6 +106,7 @@
       <label>
         set your PR version manually
         <input
+          bind:this={customAppVersionInput}
           type="number"
           on:blur={handleOnCustomAppVersionInput}
           on:keydown={(event) => {
