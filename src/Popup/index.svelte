@@ -1,10 +1,9 @@
 <script lang="ts">
   import { AppName, type AppMessage } from "../types";
   import type { Option } from "./types";
-  import clsx from "clsx";
   import { sendSaveAppStateMessage, sendStateMessage } from "./helpers";
-  import { fade } from "svelte/transition";
-  import Checkmark from "./icons/Checkmark.svelte";
+  import { Button, Switch, NativeSelect } from "@svelteuidev/core";
+  import { Backpack } from "radix-icons-svelte";
 
   const Staging = "staging";
   const Production = "production";
@@ -12,11 +11,11 @@
   const SupportedAppTargetVersions: Option[] = [
     {
       value: Staging,
-      text: "Staging",
+      label: "Staging",
     },
     {
       value: Production,
-      text: "Production",
+      label: "Production",
     },
   ];
 
@@ -67,7 +66,11 @@
   }) => void = ({ currentTarget }) => {
     if (String(customAppVersion) !== currentTarget.value) {
       customAppVersion = Number(currentTarget.value);
+      selectedAppVersion = "";
       triggerAppStateUpdate();
+    }
+    if (!currentTarget.value) {
+      selectedAppVersion = SupportedAppTargetVersions[0].value;
     }
   };
 
@@ -95,63 +98,56 @@
   <h1>Ventrata Checkout Injector</h1>
   <div class="grid gap-6 rounded-lg border border-gray-200 p-4">
     <section class="grid justify-items-center gap-2">
-      <label for="appVersionSelect"> Checkout version </label>
-      <select
-        id="appVersionSelect"
+      <NativeSelect
+        class="w-full"
+        data={SupportedAppTargetVersions}
         bind:value={selectedAppVersion}
         on:change={handleOnVersionSelect}
-        class="w-3/4"
-      >
-        {#each SupportedAppTargetVersions as { value, text }}
-          <option {value}> {text}</option>
-        {/each}
-      </select>
+        placeholder="Pick one"
+        label="Select checkout version"
+      />
     </section>
     <h2 class="text-2xl font-bold">— OR —</h2>
     <section>
-      <label>
-        set your PR version manually
-        <input
-          bind:this={customAppVersionInput}
-          type="number"
-          on:blur={handleOnCustomAppVersionInput}
-          on:keydown={(event) => {
-            if (event.key === "Enter") {
-              handleOnCustomAppVersionInput(event);
-            }
-          }}
-        />
-      </label>
+      <input
+        placeholder="Set PR version manually"
+        class="svelteUI-parody"
+        bind:this={customAppVersionInput}
+        type="number"
+        on:blur={handleOnCustomAppVersionInput}
+        on:keydown={(event) => {
+          if (event.key === "Enter") {
+            handleOnCustomAppVersionInput(event);
+          }
+        }}
+      />
     </section>
   </div>
   <footer class="grid gap-4">
-    <div class="flex items-center justify-between">
-      <button
-        class={clsx("w-full", {
-          "bg-green-200": isAppOverloadActive,
-          "bg-red-200": !isAppOverloadActive,
-        })}
-        on:click={() => {
-          isAppOverloadActive = !isAppOverloadActive;
-          triggerAppStateUpdate();
-        }}
-        ><span>Extension is:</span><span class="ml-4 text-lg font-bold"
-          >{isAppOverloadActive ? "enabled" : "disabled"}</span
-        ></button
-      >
-    </div>
-    <div class="relative grid gap-4">
-      <button on:click={handleAppConfigurationSave}
-        >{saveTriggered ? "Configuration Saved" : "Save configuration"}</button
-      >
-      {#if saveTriggered}
-        <div
-          transition:fade
-          class="absolute bottom-1/2 right-2 h-4 w-4 translate-y-1/2"
-        >
-          <Checkmark></Checkmark>
-        </div>
-      {/if}
-    </div>
+    <Switch
+      class="justify-self-center"
+      size="md"
+      onLabel="ON"
+      offLabel="OFF"
+      color="green"
+      label="Extension"
+      checked={isAppOverloadActive}
+      on:change={() => {
+        isAppOverloadActive = !isAppOverloadActive;
+        triggerAppStateUpdate();
+      }}
+    />
+
+    <Button
+      on:click={handleAppConfigurationSave}
+      variant="light"
+      color="gray"
+      ripple
+      fullSize
+      loading={saveTriggered}
+    >
+      <Backpack slot="leftIcon" />
+      {saveTriggered ? "Saving..." : "Save configuration"}
+    </Button>
   </footer>
 </main>
