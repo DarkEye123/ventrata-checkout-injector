@@ -66,7 +66,11 @@
   }) => void = ({ currentTarget }) => {
     if (String(customAppVersion) !== currentTarget.value) {
       customAppVersion = Number(currentTarget.value);
+      selectedAppVersion = "";
       triggerAppStateUpdate();
+    }
+    if (!currentTarget.value) {
+      selectedAppVersion = SupportedAppTargetVersions[0].value;
     }
   };
 
@@ -108,19 +112,18 @@
     </section>
     <h2 class="text-2xl font-bold">— OR —</h2>
     <section>
-      <label>
-        set your PR version manually
-        <input
-          bind:this={customAppVersionInput}
-          type="number"
-          on:blur={handleOnCustomAppVersionInput}
-          on:keydown={(event) => {
-            if (event.key === "Enter") {
-              handleOnCustomAppVersionInput(event);
-            }
-          }}
-        />
-      </label>
+      <input
+        placeholder="Set PR version manually"
+        class="svelteUI-parody"
+        bind:this={customAppVersionInput}
+        type="number"
+        on:blur={handleOnCustomAppVersionInput}
+        on:keydown={(event) => {
+          if (event.key === "Enter") {
+            handleOnCustomAppVersionInput(event);
+          }
+        }}
+      />
     </section>
   </div>
   <footer class="grid gap-4">
