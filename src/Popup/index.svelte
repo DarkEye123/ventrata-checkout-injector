@@ -1,10 +1,9 @@
 <script lang="ts">
   import { AppName, type AppMessage } from "../types";
   import type { Option } from "./types";
-  import clsx from "clsx";
   import { sendSaveAppStateMessage, sendStateMessage } from "./helpers";
-  import { fade } from "svelte/transition";
-  import Checkmark from "./icons/Checkmark.svelte";
+  import { Button, Switch } from "@svelteuidev/core";
+  import { Backpack } from "radix-icons-svelte";
 
   const Staging = "staging";
   const Production = "production";
@@ -125,33 +124,30 @@
     </section>
   </div>
   <footer class="grid gap-4">
-    <div class="flex items-center justify-between">
-      <button
-        class={clsx("w-full", {
-          "bg-green-200": isAppOverloadActive,
-          "bg-red-200": !isAppOverloadActive,
-        })}
-        on:click={() => {
-          isAppOverloadActive = !isAppOverloadActive;
-          triggerAppStateUpdate();
-        }}
-        ><span>Extension is:</span><span class="ml-4 text-lg font-bold"
-          >{isAppOverloadActive ? "enabled" : "disabled"}</span
-        ></button
-      >
-    </div>
-    <div class="relative grid gap-4">
-      <button on:click={handleAppConfigurationSave}
-        >{saveTriggered ? "Configuration Saved" : "Save configuration"}</button
-      >
-      {#if saveTriggered}
-        <div
-          transition:fade
-          class="absolute bottom-1/2 right-2 h-4 w-4 translate-y-1/2"
-        >
-          <Checkmark></Checkmark>
-        </div>
-      {/if}
-    </div>
+    <Switch
+      class="justify-self-center"
+      size="md"
+      onLabel="ON"
+      offLabel="OFF"
+      color="green"
+      label="Extension"
+      checked={isAppOverloadActive}
+      on:change={() => {
+        isAppOverloadActive = !isAppOverloadActive;
+        triggerAppStateUpdate();
+      }}
+    />
+
+    <Button
+      on:click={handleAppConfigurationSave}
+      variant="light"
+      color="gray"
+      ripple
+      fullSize
+      loading={saveTriggered}
+    >
+      <Backpack slot="leftIcon" />
+      {saveTriggered ? "Saving..." : "Save configuration"}
+    </Button>
   </footer>
 </main>
