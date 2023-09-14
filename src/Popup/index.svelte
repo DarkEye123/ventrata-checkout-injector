@@ -2,7 +2,7 @@
   import { AppName, type AppMessage } from "../types";
   import type { Option } from "./types";
   import { sendSaveAppStateMessage, sendStateMessage } from "./helpers";
-  import { Button, Switch } from "@svelteuidev/core";
+  import { Button, Switch, NativeSelect } from "@svelteuidev/core";
   import { Backpack } from "radix-icons-svelte";
 
   const Staging = "staging";
@@ -11,11 +11,11 @@
   const SupportedAppTargetVersions: Option[] = [
     {
       value: Staging,
-      text: "Staging",
+      label: "Staging",
     },
     {
       value: Production,
-      text: "Production",
+      label: "Production",
     },
   ];
 
@@ -98,17 +98,14 @@
   <h1>Ventrata Checkout Injector</h1>
   <div class="grid gap-6 rounded-lg border border-gray-200 p-4">
     <section class="grid justify-items-center gap-2">
-      <label for="appVersionSelect"> Checkout version </label>
-      <select
-        id="appVersionSelect"
+      <NativeSelect
+        class="w-full"
+        data={SupportedAppTargetVersions}
         bind:value={selectedAppVersion}
         on:change={handleOnVersionSelect}
-        class="w-3/4"
-      >
-        {#each SupportedAppTargetVersions as { value, text }}
-          <option {value}> {text}</option>
-        {/each}
-      </select>
+        placeholder="Pick one"
+        label="Select checkout version"
+      />
     </section>
     <h2 class="text-2xl font-bold">— OR —</h2>
     <section>

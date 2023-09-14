@@ -1,6 +1,6 @@
 interface Option {
   value: string;
-  text: string;
+  label: string;
 }
 
 export { type Option };
