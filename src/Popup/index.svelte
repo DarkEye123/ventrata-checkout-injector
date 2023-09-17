@@ -12,7 +12,7 @@
   const Staging = "staging";
   const Production = "production";
 
-  let WiredSupportedAppTargetVersions: Option[] = [
+  const WiredSupportedAppTargetVersions: Option[] = [
     {
       value: Staging,
       label: "Staging",
