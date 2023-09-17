@@ -56,14 +56,7 @@
           message.payload.ghAccessToken &&
           message.payload.ghAccessToken !== ghAccessToken
         ) {
-          ghAccessToken = message.payload.ghAccessToken;
-          const ghApVersions = (
-            await readAllPullRequestsNumbers(ghAccessToken)
-          ).map((data) => ({ label: data.title, value: `pr/${data.number}` }));
-          SupportedAppTargetVersions = [
-            ...SupportedAppTargetVersions,
-            ...ghApVersions,
-          ];
+          handleGHAccessTokenUpdate(message.payload.ghAccessToken);
         }
         break;
       }
@@ -72,6 +65,17 @@
       }
     }
   });
+
+  const handleGHAccessTokenUpdate = async (newToken: string) => {
+    ghAccessToken = newToken;
+    const ghApVersions = (await readAllPullRequestsNumbers(ghAccessToken)).map(
+      (data) => ({ label: data.title, value: `pr/${data.number}` }),
+    );
+    SupportedAppTargetVersions = [
+      ...SupportedAppTargetVersions,
+      ...ghApVersions,
+    ];
+  };
 
   const handleOnVersionSelect = () => {
     if (selectedAppVersion !== String(customAppVersion)) {
@@ -114,13 +118,14 @@
     sendSaveAppStateMessage(port);
   };
 
-  const handleGHAccessTokenRequest = () => {
+  const handleGHAccessTokenRequest = async () => {
     if (!ghAccessToken) {
       ghAccessTokenError = "Invalid Value";
       return;
     }
     ghAccessTokenError = "";
     optionsPageRequested = false;
+    await handleGHAccessTokenUpdate(ghAccessToken);
     triggerAppStateUpdate();
     sendSaveAppStateMessage(port);
   };
@@ -197,19 +202,30 @@
       </Button>
     </footer>
   {:else}
-    <section>
+    <section class="grid gap-2">
       <TextInput
+        fullSize
         label="Your GH Access Token"
         error={ghAccessTokenError}
         bind:value={ghAccessToken}
       ></TextInput>
-      <Button on:click={handleGHAccessTokenRequest}>Request Access</Button>
+      <Button
+        variant="outline"
+        color="teal"
+        compact
+        uppercase
+        ripple
+        class="justify-self-center"
+        on:click={handleGHAccessTokenRequest}>Request Access</Button
+      >
     </section>
     <footer>
       <Button
         fullSize
         ripple
         uppercase
+        variant="light"
+        color="gray"
         on:click={() => (optionsPageRequested = false)}
       >
         <ArrowLeft slot="leftIcon"></ArrowLeft>
