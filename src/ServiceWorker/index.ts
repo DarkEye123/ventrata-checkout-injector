@@ -7,7 +7,7 @@ console.log("executing service worker script");
 let popupPort: chrome.runtime.Port | null = null;
 let contentScriptPort: chrome.runtime.Port | null = null;
 
-function handlePopupMessages(message: AppMessage) {
+async function handlePopupMessages(message: AppMessage) {
   console.log("received popup message", message);
   switch (message.name) {
     case "app-state": {
@@ -33,12 +33,6 @@ chrome.runtime.onConnect.addListener((port) => {
     popupPort = port;
     console.log("popup open detected");
     popupPort.postMessage(stateMessage);
-    popupPort.postMessage({
-      contentScriptPort,
-    });
-    contentScriptPort?.postMessage({
-      popupPort,
-    });
     port.onDisconnect.addListener(() => {
       popupPort?.onMessage.removeListener(handlePopupMessages);
       popupPort = null;
@@ -47,12 +41,6 @@ chrome.runtime.onConnect.addListener((port) => {
   } else if (port.name.includes(AppName.ContentScript)) {
     console.log("content script detected");
     contentScriptPort = port;
-    popupPort?.postMessage({
-      contentScriptPort,
-    });
-    contentScriptPort.postMessage({
-      popupPort,
-    });
     contentScriptPort.postMessage(stateMessage);
     port.onDisconnect.addListener(() => {
       contentScriptPort = null;
@@ -60,10 +48,6 @@ chrome.runtime.onConnect.addListener((port) => {
   } else {
     console.error("unknown sender ID detected");
   }
-});
-
-chrome.runtime.onMessage.addListener((message) => {
-  console.log("worker script message", message);
 });
 
 async function init() {
