@@ -12,7 +12,7 @@
   const Staging = "staging";
   const Production = "production";
 
-  let SupportedAppTargetVersions: Option[] = [
+  let WiredSupportedAppTargetVersions: Option[] = [
     {
       value: Staging,
       label: "Staging",
@@ -23,7 +23,9 @@
     },
   ];
 
-  let selectedAppVersion: string = SupportedAppTargetVersions[0].value;
+  let supportedAppTargetVersions = [...WiredSupportedAppTargetVersions];
+
+  let selectedAppVersion: string = supportedAppTargetVersions[0].value;
   let customAppVersion: number | null = null;
   let isAppActive = false;
   let saveTriggered = false;
@@ -71,8 +73,8 @@
     const ghApVersions = (await readAllPullRequestsNumbers(ghAccessToken)).map(
       (data) => ({ label: data.title, value: `pr/${data.number}` }),
     );
-    SupportedAppTargetVersions = [
-      ...SupportedAppTargetVersions,
+    supportedAppTargetVersions = [
+      ...WiredSupportedAppTargetVersions,
       ...ghApVersions,
     ];
   };
@@ -94,7 +96,7 @@
       triggerAppStateUpdate();
     }
     if (!currentTarget.value) {
-      selectedAppVersion = SupportedAppTargetVersions[0].value;
+      selectedAppVersion = supportedAppTargetVersions[0].value;
     }
   };
 
@@ -124,10 +126,12 @@
       return;
     }
     ghAccessTokenError = "";
-    optionsPageRequested = false;
+    saveTriggered = true;
     await handleGHAccessTokenUpdate(ghAccessToken);
     triggerAppStateUpdate();
     sendSaveAppStateMessage(port);
+    saveTriggered = false;
+    optionsPageRequested = false;
   };
 </script>
 
@@ -151,7 +155,7 @@
       <section class="grid justify-items-center gap-2">
         <NativeSelect
           class="w-full"
-          data={SupportedAppTargetVersions}
+          data={supportedAppTargetVersions}
           bind:value={selectedAppVersion}
           on:change={handleOnVersionSelect}
           placeholder="Pick one"
@@ -216,6 +220,7 @@
         uppercase
         ripple
         class="justify-self-center"
+        loading={saveTriggered}
         on:click={handleGHAccessTokenRequest}>Request Access</Button
       >
     </section>
