@@ -13,6 +13,7 @@ interface StateMessage extends GenericMessage {
   payload: {
     isActive: boolean;
     appVersion: string; //staging, production, or PR string
+    ghAccessToken?: string;
   };
 }
 

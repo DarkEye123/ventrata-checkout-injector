@@ -35,6 +35,8 @@
     "npm": "^10"
   },
   "dependencies": {
+    "@octokit/core": "^5.0.0",
+    "@octokit/plugin-rest-endpoint-methods": "^9.0.0",
     "@svelteuidev/core": "^0.15.3",
     "clsx": "^2.0.0",
     "radix-icons-svelte": "^1.2.1"
