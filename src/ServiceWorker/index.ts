@@ -13,6 +13,11 @@ async function handlePopupMessages(message: AppMessage) {
     case "app-state": {
       updateAppState(message.payload);
       updateRules(message.payload.isActive);
+      if (message.payload.isActive) {
+        chrome.action.setIcon({ path: "assets/script-active.png" });
+      } else {
+        chrome.action.setIcon({ path: "assets/script-inactive.png" });
+      }
       chrome.tabs.reload();
       break;
     }
