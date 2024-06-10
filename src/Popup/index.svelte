@@ -8,6 +8,7 @@
   } from "./helpers";
   import { Button, Switch, NativeSelect, TextInput } from "@svelteuidev/core";
   import { Backpack, ArrowLeft } from "radix-icons-svelte";
+  import packageInfo from "../../package.json";
 
   const Staging = "staging";
   const Production = "production";
@@ -178,7 +179,7 @@
         />
       </section>
     </div>
-    <footer class="grid gap-4">
+    <div class="grid gap-4">
       <Switch
         class="justify-self-center"
         size="md"
@@ -204,7 +205,7 @@
         <Backpack slot="leftIcon" />
         {saveTriggered ? "Saving..." : "Save configuration"}
       </Button>
-    </footer>
+    </div>
   {:else}
     <section class="grid gap-2">
       <TextInput
@@ -224,7 +225,7 @@
         on:click={handleGHAccessTokenRequest}>Request Access</Button
       >
     </section>
-    <footer>
+    <div>
       <Button
         fullSize
         ripple
@@ -236,6 +237,11 @@
         <ArrowLeft slot="leftIcon"></ArrowLeft>
         go back
       </Button>
-    </footer>
+    </div>
   {/if}
+  <footer>
+    <p class="text-xs text-gray-500">
+      Version: {packageInfo.version}
+    </p>
+  </footer>
 </main>
