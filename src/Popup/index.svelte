@@ -9,6 +9,7 @@
   import { Button, Switch, NativeSelect, TextInput } from "@svelteuidev/core";
   import { Backpack, ArrowLeft } from "radix-icons-svelte";
   import packageInfo from "../../package.json";
+  import GithubAccess from "./Views/GithubAccess.svelte";
 
   const Staging = "staging";
   const Production = "production";
@@ -207,26 +208,12 @@
       </Button>
     </div>
   {:else}
-    <section class="grid gap-2">
-      <TextInput
-        fullSize
-        label="Your GH Access Token"
-        error={ghAccessTokenError}
-        bind:value={ghAccessToken}
-      ></TextInput>
-      <Button
-        variant="outline"
-        color="teal"
-        compact
-        uppercase
-        ripple
-        class="justify-self-center"
-        loading={saveTriggered}
-        on:click={handleGHAccessTokenRequest}>Request Access</Button
-      >
-    </section>
-    <div>
-      <Button
+    <GithubAccess
+      isLoading={saveTriggered}
+      on:requestAccess={handleGHAccessTokenRequest}
+      bind:ghAccessToken
+      {ghAccessTokenError}
+      ><Button
         fullSize
         ripple
         uppercase
@@ -236,8 +223,8 @@
       >
         <ArrowLeft slot="leftIcon"></ArrowLeft>
         go back
-      </Button>
-    </div>
+      </Button></GithubAccess
+    >
   {/if}
   <footer>
     <p class="text-xs text-gray-500">
