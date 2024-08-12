@@ -1,19 +1,14 @@
-import type { AppMessage, SaveAppStateMessage, StateMessage } from "../types";
+import type { AppMessage, SaveAppStateMessage } from "../types";
 import { Octokit } from "@octokit/core";
 import { restEndpointMethods } from "@octokit/plugin-rest-endpoint-methods";
 
 const MyOctokit = Octokit.plugin(restEndpointMethods);
 
-function sendStateMessage(
+function sendSaveAppStateMessage(
   port: chrome.runtime.Port,
-  payload: StateMessage["payload"],
+  payload: SaveAppStateMessage["payload"],
 ) {
-  const stateMessage: StateMessage = { name: "app-state", payload };
-  sendMessage(port, stateMessage);
-}
-
-function sendSaveAppStateMessage(port: chrome.runtime.Port) {
-  const stateMessage: SaveAppStateMessage = { name: "save-app-state" };
+  const stateMessage: SaveAppStateMessage = { name: "save-app-state", payload };
   sendMessage(port, stateMessage);
 }
 
@@ -43,9 +38,4 @@ async function readAllPullRequestsNumbers(ghAccessToken: string) {
   return [];
 }
 
-export {
-  sendMessage,
-  sendStateMessage,
-  sendSaveAppStateMessage,
-  readAllPullRequestsNumbers,
-};
+export { sendMessage, sendSaveAppStateMessage, readAllPullRequestsNumbers };

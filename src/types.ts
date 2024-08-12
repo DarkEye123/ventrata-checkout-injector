@@ -1,3 +1,14 @@
+type AppState = {
+  extensionIsActive: boolean;
+  appVersion: string;
+  ghAccessToken?: string;
+};
+
+const Staging = "staging";
+const Production = "production";
+
+const SupportedEnvironments = [Staging, Production];
+
 enum AppName {
   Popup = "ventrata-injector-popup",
   ContentScript = "ventrata-injector-content-script",
@@ -8,20 +19,17 @@ interface GenericMessage {
   payload?: unknown;
 }
 
-interface StateMessage extends GenericMessage {
-  name: "app-state";
-  payload: {
-    isActive: boolean;
-    appVersion: string; //staging, production, or PR string
-    ghAccessToken?: string;
-  };
-}
-
 interface SaveAppStateMessage extends GenericMessage {
   name: "save-app-state";
+  payload: AppState;
 }
 
-type AppMessage = StateMessage | SaveAppStateMessage;
+interface AppStateMessage extends GenericMessage {
+  name: "app-state";
+  payload: AppState;
+}
+
+type AppMessage = AppStateMessage | SaveAppStateMessage;
 
 const ScriptReference = "?ref=ventrata-injector-extension";
 
@@ -30,6 +38,10 @@ export {
   type GenericMessage,
   ScriptReference,
   type AppMessage,
-  type StateMessage,
   type SaveAppStateMessage,
+  Staging,
+  Production,
+  SupportedEnvironments,
+  type AppState,
+  type AppStateMessage,
 };

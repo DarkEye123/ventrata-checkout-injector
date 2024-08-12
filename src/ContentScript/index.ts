@@ -4,7 +4,7 @@ import { injectScript } from "./helpers";
 function messageHandler(message: AppMessage) {
   switch (message.name) {
     case "app-state": {
-      if (message.payload.isActive) {
+      if (message.payload.extensionIsActive) {
         injectScript(message.payload.appVersion);
       }
     }

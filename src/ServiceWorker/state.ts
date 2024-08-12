@@ -1,22 +1,17 @@
-import type { StateMessage } from "../types";
+import type { AppStateMessage } from "../types";
 
-let appState: StateMessage["payload"] = {
-  appVersion: "staging",
-  isActive: true,
-};
-
-chrome.storage.local.get("appState", (value) => {
-  if (value.appState) {
-    appState = value.appState as typeof appState;
-  }
-});
-
-function createStateMessage(): StateMessage {
-  return { name: "app-state", payload: appState };
+function createStateMessage(): Promise<AppStateMessage> {
+  return new Promise((resolve) => {
+    chrome.storage.local.get("appState", (value) => {
+      if (value.appState) {
+        resolve({ name: "app-state", payload: value.appState });
+      }
+    });
+  });
 }
 
-function updateAppState(newState: typeof appState) {
-  appState = { ...newState };
+function saveAppState(appState: AppStateMessage["payload"]) {
+  chrome.storage.local.set({ appState });
 }
 
-export { updateAppState, createStateMessage, appState };
+export { createStateMessage, saveAppState };
