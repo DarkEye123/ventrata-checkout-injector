@@ -11,10 +11,6 @@
   import { extendAppTargetVersionStore } from "./stores/appVersions";
   import type { Option } from "./types";
 
-  let ghAccessToken: string = "";
-  let optionsPageRequested = false;
-  let ghAccessTokenError = "";
-
   const port = chrome.runtime.connect({
     name: `${AppName.Popup}`,
   });
@@ -44,17 +40,6 @@
     }
   });
 
-  const handleGHAccessTokenUpdate = async (newToken: string) => {
-    ghAccessToken = newToken;
-    const ghApVersions = (
-      await readAllPullRequestsNumbers(ghAccessToken)
-    ).map<Option>((data) => ({
-      label: data.title,
-      value: String(data.number),
-    }));
-    extendAppTargetVersionStore(ghApVersions);
-  };
-
   const handleAppConfigurationSave = () => {
     saveActionInProgress.set(true);
     setTimeout(() => {
@@ -64,19 +49,6 @@
 
     console.log("here");
     sendSaveAppStateMessage(port, $stateStore);
-  };
-
-  const handleGHAccessTokenRequest = async () => {
-    if (!ghAccessToken) {
-      ghAccessTokenError = "Invalid Value";
-      return;
-    }
-    ghAccessTokenError = "";
-    saveActionInProgress.set(true);
-    await handleGHAccessTokenUpdate(ghAccessToken);
-    sendSaveAppStateMessage(port, $stateStore);
-    saveActionInProgress.set(false);
-    optionsPageRequested = false;
   };
 
   let saveButtonEnabled = false;
@@ -107,27 +79,10 @@
       compact
       uppercase
       ripple
-      on:click={() => (optionsPageRequested = true)}>Activate GH Access</Button
+      on:click={() => currentViewName.set("settings")}
+      >Activate GH Access</Button
     >
   </section>
-  <!-- <GithubAccess
-      isLoading={saveTriggered}
-      on:requestAccess={handleGHAccessTokenRequest}
-      bind:ghAccessToken
-      {ghAccessTokenError}
-      ><Button
-        fullSize
-        ripple
-        uppercase
-        variant="light"
-        color="gray"
-        on:click={() => (optionsPageRequested = false)}
-      >
-        <ArrowLeft slot="leftIcon"></ArrowLeft>
-        go back
-      </Button></GithubAccess
-    > -->
-  <footer></footer>
 {:else}
   <main class="flex animate-bounce items-center justify-center text-xl">
     <h1>Loading ...</h1>
