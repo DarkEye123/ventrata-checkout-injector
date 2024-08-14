@@ -1,6 +1,6 @@
 {
   "name": "ventrata-checkout-injector",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "author": "Matej Leško <lesko.matej.pu@gmail.com>",
