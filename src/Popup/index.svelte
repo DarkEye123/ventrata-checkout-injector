@@ -1,66 +1,41 @@
 <script lang="ts">
   import { AppName, type AppMessage } from "../types";
-  import type { Option } from "./types";
   import {
-    readAllPullRequestsNumbers,
+    handleGHAccessTokenUpdate,
     sendSaveAppStateMessage,
-    sendStateMessage,
   } from "./helpers";
-  import { Button, Switch, NativeSelect, TextInput } from "@svelteuidev/core";
-  import { Backpack, ArrowLeft } from "radix-icons-svelte";
-  import packageInfo from "../../package.json";
-
-  const Staging = "staging";
-  const Production = "production";
-
-  const WiredSupportedAppTargetVersions: Option[] = [
-    {
-      value: Staging,
-      label: "Staging",
-    },
-    {
-      value: Production,
-      label: "Production",
-    },
-  ];
-
-  let supportedAppTargetVersions = [...WiredSupportedAppTargetVersions];
-
-  let selectedAppVersion: string = supportedAppTargetVersions[0].value;
-  let customAppVersion: number | null = null;
-  let isAppActive = false;
-  let saveTriggered = false;
-  let customAppVersionInput: HTMLInputElement;
-  let ghAccessToken: string = "";
-  let optionsPageRequested = false;
-  let ghAccessTokenError = "";
+  import { Button } from "@svelteuidev/core";
+  import { viewMap, type ViewComponent } from "./Views/viewMap";
+  import { currentViewName } from "./stores/navigation";
+  import stateStore, {
+    appStateSyncInProgress,
+    saveActionInProgress,
+  } from "./stores/state";
 
   const port = chrome.runtime.connect({
     name: `${AppName.Popup}`,
   });
 
+  let canRender = false;
+
   port.onMessage.addListener(async (message: AppMessage) => {
     console.log("popup port script message", message);
     switch (message.name) {
       case "app-state": {
-        if (
-          message.payload.appVersion.startsWith("pr") &&
-          message.payload.appVersion !== Production
-        ) {
-          const versionPart = message.payload.appVersion.split("/")[1];
-          customAppVersion = Number(versionPart);
-          customAppVersionInput.value = versionPart;
-          selectedAppVersion = "";
-        } else {
-          selectedAppVersion = message.payload.appVersion;
+        appStateSyncInProgress.set(true);
+        canRender = true;
+        const { appVersion, extensionIsActive, ghAccessToken } =
+          message.payload;
+        stateStore.update((state) => ({
+          ...state,
+          appVersion,
+          extensionIsActive,
+        }));
+        if (ghAccessToken && ghAccessToken !== $stateStore.ghAccessToken) {
+          $stateStore.ghAccessToken = ghAccessToken;
+          await handleGHAccessTokenUpdate(ghAccessToken);
         }
-        isAppActive = message.payload.isActive;
-        if (
-          message.payload.ghAccessToken &&
-          message.payload.ghAccessToken !== ghAccessToken
-        ) {
-          handleGHAccessTokenUpdate(message.payload.ghAccessToken);
-        }
+        appStateSyncInProgress.set(false);
         break;
       }
       default: {
@@ -69,179 +44,53 @@
     }
   });
 
-  const handleGHAccessTokenUpdate = async (newToken: string) => {
-    ghAccessToken = newToken;
-    const ghApVersions = (await readAllPullRequestsNumbers(ghAccessToken)).map(
-      (data) => ({ label: data.title, value: `pr/${data.number}` }),
-    );
-    supportedAppTargetVersions = [
-      ...WiredSupportedAppTargetVersions,
-      ...ghApVersions,
-    ];
-  };
-
-  const handleOnVersionSelect = () => {
-    if (selectedAppVersion !== String(customAppVersion)) {
-      customAppVersion = null;
-      customAppVersionInput.value = "";
-    }
-    triggerAppStateUpdate();
-  };
-
-  const handleOnCustomAppVersionInput: (event: {
-    currentTarget: HTMLInputElement;
-  }) => void = ({ currentTarget }) => {
-    if (String(customAppVersion) !== currentTarget.value) {
-      customAppVersion = Number(currentTarget.value);
-      selectedAppVersion = "";
-      triggerAppStateUpdate();
-    }
-    if (!currentTarget.value) {
-      selectedAppVersion = supportedAppTargetVersions[0].value;
-    }
-  };
-
-  const triggerAppStateUpdate = () => {
-    const prefixedCustomAppVersion = customAppVersion
-      ? `pr/${customAppVersion}`
-      : null;
-    sendStateMessage(port, {
-      appVersion: prefixedCustomAppVersion || selectedAppVersion,
-      isActive: isAppActive,
-      ghAccessToken,
-    });
-  };
-
   const handleAppConfigurationSave = () => {
-    saveTriggered = true;
+    saveActionInProgress.set(true);
     setTimeout(() => {
-      saveTriggered = false;
+      saveActionInProgress.set(false);
+      saveButtonEnabled = false;
     }, 1000); // visual UX feedback
 
-    sendSaveAppStateMessage(port);
+    console.log("here");
+    sendSaveAppStateMessage(port, $stateStore);
   };
 
-  const handleGHAccessTokenRequest = async () => {
-    if (!ghAccessToken) {
-      ghAccessTokenError = "Invalid Value";
-      return;
-    }
-    ghAccessTokenError = "";
-    saveTriggered = true;
-    await handleGHAccessTokenUpdate(ghAccessToken);
-    triggerAppStateUpdate();
-    sendSaveAppStateMessage(port);
-    saveTriggered = false;
-    optionsPageRequested = false;
-  };
+  let saveButtonEnabled = false;
+
+  let activeView: ViewComponent;
+  $: activeViewMap = viewMap[$currentViewName];
+  $: activeViewFn = activeViewMap.default;
+  $: activeViewFn().then((view) => {
+    activeView = view.default;
+  });
 </script>
 
-<main class="grid gap-6">
-  {#if !optionsPageRequested}
-    <section class="absolute right-4 top-2">
+{#if canRender}
+  <nav class="absolute right-4 top-2">
+    {#each activeViewMap.navigationList as navigationItem}
       <Button
-        override={{ fontSize: "8px" }}
+        override={{ fontSize: "8px", textTransform: "uppercase" }}
         variant="subtle"
         color="indigo"
         size="xs"
         compact
         uppercase
         ripple
-        on:click={() => (optionsPageRequested = true)}
-        >Activate GH Access</Button
+        on:click={() => currentViewName.set(navigationItem)}
+        >{navigationItem}</Button
       >
-    </section>
-    <h1>Ventrata Checkout Injector</h1>
-    <div class="grid gap-6 rounded-lg border border-gray-200 p-4">
-      <section class="grid justify-items-center gap-2">
-        <NativeSelect
-          class="w-full"
-          data={supportedAppTargetVersions}
-          bind:value={selectedAppVersion}
-          on:change={handleOnVersionSelect}
-          placeholder="Pick one"
-          label="Select checkout version"
-        />
-      </section>
-      <h2 class="text-2xl font-bold">— OR —</h2>
-      <section>
-        <input
-          placeholder="Set PR version manually"
-          class="svelteUI-parody"
-          bind:this={customAppVersionInput}
-          type="number"
-          on:blur={handleOnCustomAppVersionInput}
-          on:keydown={(event) => {
-            if (event.key === "Enter") {
-              handleOnCustomAppVersionInput(event);
-            }
-          }}
-        />
-      </section>
-    </div>
-    <div class="grid gap-4">
-      <Switch
-        class="justify-self-center"
-        size="md"
-        onLabel="ON"
-        offLabel="OFF"
-        color="green"
-        label="Extension"
-        checked={isAppActive}
-        on:change={() => {
-          isAppActive = !isAppActive;
-          triggerAppStateUpdate();
-        }}
-      />
-
-      <Button
-        on:click={handleAppConfigurationSave}
-        variant="light"
-        color="gray"
-        ripple
-        fullSize
-        loading={saveTriggered}
-      >
-        <Backpack slot="leftIcon" />
-        {saveTriggered ? "Saving..." : "Save configuration"}
-      </Button>
-    </div>
-  {:else}
-    <section class="grid gap-2">
-      <TextInput
-        fullSize
-        label="Your GH Access Token"
-        error={ghAccessTokenError}
-        bind:value={ghAccessToken}
-      ></TextInput>
-      <Button
-        variant="outline"
-        color="teal"
-        compact
-        uppercase
-        ripple
-        class="justify-self-center"
-        loading={saveTriggered}
-        on:click={handleGHAccessTokenRequest}>Request Access</Button
-      >
-    </section>
-    <div>
-      <Button
-        fullSize
-        ripple
-        uppercase
-        variant="light"
-        color="gray"
-        on:click={() => (optionsPageRequested = false)}
-      >
-        <ArrowLeft slot="leftIcon"></ArrowLeft>
-        go back
-      </Button>
-    </div>
-  {/if}
-  <footer>
-    <p class="text-xs text-gray-500">
-      Version: {packageInfo.version}
-    </p>
-  </footer>
-</main>
+    {/each}
+  </nav>
+  <svelte:component
+    this={activeView}
+    {saveButtonEnabled}
+    on:requestAppStateSync={handleAppConfigurationSave}
+    on:appStateSyncReady={() => {
+      saveButtonEnabled = true;
+    }}
+  />
+{:else}
+  <main class="flex animate-bounce items-center justify-center text-xl">
+    <h1>Loading ...</h1>
+  </main>
+{/if}

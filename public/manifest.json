@@ -1,6 +1,6 @@
 {
   "name": "Ventrata Checkout Injector",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Try Ventrata checkout everywhere",
   "permissions": [
     "background",
