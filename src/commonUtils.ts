@@ -5,7 +5,7 @@ function isPublicEnvironment(appVersion: string) {
 }
 
 function isTunneledEnvironment(appVersion: string) {
-  if (isPublicEnvironment(appVersion) || appVersion.match(/^[0-9]+$/)) {
+  if (isPublicEnvironment(appVersion) || appVersion.match(/^pr\/[0-9]+$/)) {
     return false;
   }
   return true;
