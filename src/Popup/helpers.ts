@@ -1,6 +1,8 @@
 import type { AppMessage, SaveAppStateMessage } from "../types";
 import { Octokit } from "@octokit/core";
 import { restEndpointMethods } from "@octokit/plugin-rest-endpoint-methods";
+import type { Option } from "./types";
+import { extendAppTargetVersionStore } from "./stores/appVersions";
 
 const MyOctokit = Octokit.plugin(restEndpointMethods);
 
@@ -38,4 +40,25 @@ async function readAllPullRequestsNumbers(ghAccessToken: string) {
   return [];
 }
 
-export { sendMessage, sendSaveAppStateMessage, readAllPullRequestsNumbers };
+const handleGHAccessTokenUpdate = async (ghAccessToken: string) => {
+  const listOfPRNumbers = await readAllPullRequestsNumbers(ghAccessToken);
+  if (listOfPRNumbers.length === 0) {
+    return {
+      error: "fetched PR list is empty, verify token validity",
+      success: false,
+    };
+  }
+  const ghApVersions = listOfPRNumbers.map<Option>((data) => ({
+    label: data.title,
+    value: String(data.number),
+  }));
+  extendAppTargetVersionStore(ghApVersions);
+  return { success: true };
+};
+
+export {
+  handleGHAccessTokenUpdate,
+  sendMessage,
+  sendSaveAppStateMessage,
+  readAllPullRequestsNumbers,
+};

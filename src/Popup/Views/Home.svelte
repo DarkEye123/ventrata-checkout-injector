@@ -1,10 +1,12 @@
 <script lang="ts">
   import { Switch, NativeSelect } from "@svelteuidev/core";
-  import stateStore from "../stores/state";
+  import stateStore, { appStateSyncInProgress } from "../stores/state";
   import Panel from "./Panel.svelte";
   import { supportedAppTargetVersionsStore } from "../stores/appVersions";
   import { useAppStateSync } from "../hooks/appStateSync";
   import { isPublicEnvironment } from "../../commonUtils";
+  import { CircleBackslash, ArrowRight } from "radix-icons-svelte";
+  import clsx from "clsx";
 
   export let saveButtonEnabled: boolean;
 
@@ -46,7 +48,21 @@
         on:change={handleOnVersionSelect}
         placeholder="Pick one"
         label="Select checkout version"
-      />
+        disabled={$appStateSyncInProgress}
+      >
+        <div
+          slot="icon"
+          class={clsx({
+            "animate-pulse rounded-lg bg-red-100 p-1": $appStateSyncInProgress,
+          })}
+        >
+          {#if $appStateSyncInProgress}
+            <CircleBackslash></CircleBackslash>
+          {:else}
+            <ArrowRight></ArrowRight>
+          {/if}
+        </div>
+      </NativeSelect>
       <h2 class="text-lg font-bold">— OR —</h2>
       <input
         placeholder="Set PR version manually"

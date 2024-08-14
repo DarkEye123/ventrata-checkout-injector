@@ -1,36 +1,29 @@
 <script lang="ts">
   import { Button, TextInput } from "@svelteuidev/core";
   import Panel from "./Panel.svelte";
-  import { extendAppTargetVersionStore } from "../stores/appVersions";
-  import { readAllPullRequestsNumbers } from "../helpers";
-  import type { Option } from "../types";
-  import stateStore, { saveActionInProgress } from "../stores/state";
+  import { handleGHAccessTokenUpdate } from "../helpers";
+  import stateStore from "../stores/state";
   import { useAppStateSync } from "../hooks/appStateSync";
 
-  const { appStateSyncReady } = useAppStateSync();
+  const { requestAppStateSync } = useAppStateSync();
 
   let newAccessToken = $stateStore.ghAccessToken || "";
 
   let ghAccessTokenError = "";
   let isFetchingTokenData = false;
 
-  const handleGHAccessTokenUpdate = async () => {
+  const handleAccessTokenUpdate = async () => {
     isFetchingTokenData = true;
     $stateStore.ghAccessToken = newAccessToken;
 
-    const listOfPRNumbers = await readAllPullRequestsNumbers(newAccessToken);
-    if (listOfPRNumbers.length === 0) {
-      isFetchingTokenData = false;
-      ghAccessTokenError = "fetched PR list is empty, verify token validity";
-      return;
-    }
-    const ghApVersions = listOfPRNumbers.map<Option>((data) => ({
-      label: data.title,
-      value: String(data.number),
-    }));
-    extendAppTargetVersionStore(ghApVersions);
+    const { error } = await handleGHAccessTokenUpdate(newAccessToken);
     isFetchingTokenData = false;
-    appStateSyncReady();
+
+    if (error) {
+      ghAccessTokenError = error;
+    } else {
+      requestAppStateSync();
+    }
   };
 
   $: requestAccessButtonEnabled =
@@ -63,7 +56,7 @@
       class="justify-self-center"
       loading={isFetchingTokenData}
       disabled={!requestAccessButtonEnabled}
-      on:click={handleGHAccessTokenUpdate}>Request Access</Button
+      on:click={handleAccessTokenUpdate}>Request Access</Button
     >
   </section>
 </Panel>

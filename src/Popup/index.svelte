@@ -1,15 +1,16 @@
 <script lang="ts">
   import { AppName, type AppMessage } from "../types";
   import {
-    readAllPullRequestsNumbers,
+    handleGHAccessTokenUpdate,
     sendSaveAppStateMessage,
   } from "./helpers";
   import { Button } from "@svelteuidev/core";
   import { viewMap, type ViewComponent } from "./Views/viewMap";
   import { currentViewName } from "./stores/navigation";
-  import stateStore, { saveActionInProgress } from "./stores/state";
-  import { extendAppTargetVersionStore } from "./stores/appVersions";
-  import type { Option } from "./types";
+  import stateStore, {
+    appStateSyncInProgress,
+    saveActionInProgress,
+  } from "./stores/state";
 
   const port = chrome.runtime.connect({
     name: `${AppName.Popup}`,
@@ -21,6 +22,7 @@
     console.log("popup port script message", message);
     switch (message.name) {
       case "app-state": {
+        appStateSyncInProgress.set(true);
         canRender = true;
         const { appVersion, extensionIsActive, ghAccessToken } =
           message.payload;
@@ -30,8 +32,9 @@
           extensionIsActive,
         }));
         if (ghAccessToken && ghAccessToken !== $stateStore.ghAccessToken) {
-          handleGHAccessTokenUpdate(ghAccessToken);
+          await handleGHAccessTokenUpdate(ghAccessToken);
         }
+        appStateSyncInProgress.set(false);
         break;
       }
       default: {

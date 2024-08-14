@@ -7,6 +7,7 @@ const stateStore = writable<AppState>({
 });
 
 const saveActionInProgress = writable(false);
+const appStateSyncInProgress = writable(false);
 
 export default stateStore;
-export { saveActionInProgress };
+export { saveActionInProgress, appStateSyncInProgress };
