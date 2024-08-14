@@ -15,9 +15,9 @@
   "host_permissions": ["http://*/*", "https://*/*"],
   "action": {
     "default_icon": {
-      "16": "assets/icon.png",
-      "24": "assets/icon.png",
-      "32": "assets/icon.png"
+      "16": "assets/ventrata-shop-icon.png",
+      "24": "assets/ventrata-shop-icon.png",
+      "32": "assets/ventrata-shop-icon.png"
     },
     "default_title": "Ventrata Checkout Injector",
     "default_popup": "src/Popup/index.html"
