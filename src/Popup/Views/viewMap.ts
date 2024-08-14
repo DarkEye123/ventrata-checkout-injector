@@ -5,11 +5,21 @@ type ViewComponent = typeof SvelteComponent;
 
 const viewMap: Record<
   SupportedViews,
-  () => Promise<{ default: ViewComponent }>
+  {
+    default: () => Promise<{ default: ViewComponent }>;
+    navigationList: SupportedViews[];
+  }
 > = {
-  home: () => import("./Home.svelte") as Promise<{ default: ViewComponent }>,
-  settings: () =>
-    import("./Settings.svelte") as Promise<{ default: ViewComponent }>,
+  home: {
+    default: () =>
+      import("./Home.svelte") as Promise<{ default: ViewComponent }>,
+    navigationList: ["settings"],
+  },
+  settings: {
+    default: () =>
+      import("./Settings.svelte") as Promise<{ default: ViewComponent }>,
+    navigationList: ["home"],
+  },
 };
 
 export { viewMap, type ViewComponent };

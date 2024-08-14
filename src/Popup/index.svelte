@@ -32,6 +32,7 @@
           extensionIsActive,
         }));
         if (ghAccessToken && ghAccessToken !== $stateStore.ghAccessToken) {
+          $stateStore.ghAccessToken = ghAccessToken;
           await handleGHAccessTokenUpdate(ghAccessToken);
         }
         appStateSyncInProgress.set(false);
@@ -57,13 +58,29 @@
   let saveButtonEnabled = false;
 
   let activeView: ViewComponent;
-  $: activeViewFn = viewMap[$currentViewName];
+  $: activeViewMap = viewMap[$currentViewName];
+  $: activeViewFn = activeViewMap.default;
   $: activeViewFn().then((view) => {
     activeView = view.default;
   });
 </script>
 
 {#if canRender}
+  <nav class="absolute right-4 top-2">
+    {#each activeViewMap.navigationList as navigationItem}
+      <Button
+        override={{ fontSize: "8px", textTransform: "uppercase" }}
+        variant="subtle"
+        color="indigo"
+        size="xs"
+        compact
+        uppercase
+        ripple
+        on:click={() => currentViewName.set(navigationItem)}
+        >{navigationItem}</Button
+      >
+    {/each}
+  </nav>
   <svelte:component
     this={activeView}
     {saveButtonEnabled}
@@ -72,20 +89,6 @@
       saveButtonEnabled = true;
     }}
   />
-
-  <section class="absolute right-4 top-2">
-    <Button
-      override={{ fontSize: "8px" }}
-      variant="subtle"
-      color="indigo"
-      size="xs"
-      compact
-      uppercase
-      ripple
-      on:click={() => currentViewName.set("settings")}
-      >Activate GH Access</Button
-    >
-  </section>
 {:else}
   <main class="flex animate-bounce items-center justify-center text-xl">
     <h1>Loading ...</h1>
