@@ -29,7 +29,9 @@ async function handlePopupMessages(message: AppMessage) {
 
 // TODO rethink if it is really needed to update popup and content script by their ports, it seems that it is not needed at the end
 chrome.runtime.onConnect.addListener(async (port) => {
+  console.log("Service Worker::onConnect", port);
   const stateMessage = await createStateMessage();
+  console.log("Service Worker::stateMessage", stateMessage);
   if (port.name === AppName.Popup) {
     popupPort = port;
     console.log("popup open detected");

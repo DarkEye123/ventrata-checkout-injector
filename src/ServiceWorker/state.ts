@@ -3,9 +3,7 @@ import type { AppStateMessage } from "../types";
 function createStateMessage(): Promise<AppStateMessage> {
   return new Promise((resolve) => {
     chrome.storage.local.get("appState", (value) => {
-      if (value.appState) {
-        resolve({ name: "app-state", payload: value.appState });
-      }
+      resolve({ name: "app-state", payload: value.appState });
     });
   });
 }

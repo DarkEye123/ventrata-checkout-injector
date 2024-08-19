@@ -26,7 +26,7 @@ function init() {
       name: `${AppName.ContentScript}`,
     });
 
-    console.log("Ventrata Injector::content script connected");
+    console.log("Ventrata Injector::content script connected", port);
 
     port.onMessage.addListener(messageHandler);
 
