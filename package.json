@@ -1,13 +1,13 @@
 {
   "name": "ventrata-checkout-injector",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "type": "module",
   "author": "Matej Leško <lesko.matej.pu@gmail.com>",
   "scripts": {
     "dev": "node multiple-entries-config.js --watch",
     "build": "node multiple-entries-config.js",
-    "release": "rm -rf dist; node multiple-entries-config.js; cd dist; zip -r ../ventrata-checkout-injector.zip *; cd ..",
+    "release": "rm -rf dist ventrata-checkout-injector.zip; node multiple-entries-config.js; cd dist; zip -r ../ventrata-checkout-injector.zip *; cd ..",
     "check": "svelte-check --tsconfig ./tsconfig.json"
   },
   "devDependencies": {

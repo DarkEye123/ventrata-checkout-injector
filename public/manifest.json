@@ -1,6 +1,6 @@
 {
   "name": "Ventrata Checkout Injector",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Try Ventrata checkout everywhere",
   "permissions": [
     "background",
@@ -8,9 +8,7 @@
     "storage",
     "scripting",
     "activeTab",
-    "tabs",
-    "clipboardRead",
-    "contextMenus"
+    "tabs"
   ],
   "host_permissions": ["http://*/*", "https://*/*"],
   "action": {
