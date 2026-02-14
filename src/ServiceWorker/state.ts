@@ -20,7 +20,10 @@ function createStateMessage(tabId?: number): Promise<AppStateMessage> {
       const appStateByTab = (value.appStateByTab ?? {}) as AppStateByTab;
       const tabState =
         typeof tabId === "number" ? appStateByTab[tabId] : undefined;
-      const appState = tabState ?? value.appState;
+      const hasAnyTabState = Object.keys(appStateByTab).length > 0;
+      // Legacy fallback is used only before first tab-scoped state is persisted.
+      const appState =
+        tabState ?? (!hasAnyTabState ? value.appState : DEFAULT_APP_STATE);
       resolve({ name: "app-state", payload: normalizeAppState(appState) });
     });
   });
@@ -29,8 +32,8 @@ function createStateMessage(tabId?: number): Promise<AppStateMessage> {
 function saveAppState(tabId: number | undefined, appState: AppState) {
   const normalizedAppState = normalizeAppState(appState);
 
-  chrome.storage.local.set({ appState: normalizedAppState });
   if (typeof tabId !== "number") {
+    chrome.storage.local.set({ appState: normalizedAppState });
     return;
   }
 
