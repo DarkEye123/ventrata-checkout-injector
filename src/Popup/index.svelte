@@ -2,6 +2,8 @@
   import { AppName, type AppMessage } from "../types";
   import {
     handleGHAccessTokenUpdate,
+    readCurrentActiveTabId,
+    sendGetAppStateMessage,
     sendSaveAppStateMessage,
   } from "./helpers";
   import { Button } from "@svelteuidev/core";
@@ -15,6 +17,7 @@
   const port = chrome.runtime.connect({
     name: `${AppName.Popup}`,
   });
+  let activeTabId: number | undefined;
 
   let canRender = false;
 
@@ -52,7 +55,16 @@
     }, 1000); // visual UX feedback
 
     console.log("here");
-    sendSaveAppStateMessage(port, $stateStore);
+    sendSaveAppStateMessage(port, $stateStore, activeTabId);
+  };
+
+  const init = async () => {
+    try {
+      activeTabId = await readCurrentActiveTabId();
+    } catch (error) {
+      console.error("Failed to read active tab ID", error);
+    }
+    sendGetAppStateMessage(port, activeTabId);
   };
 
   let saveButtonEnabled = false;
@@ -63,6 +75,8 @@
   $: activeViewFn().then((view) => {
     activeView = view.default;
   });
+
+  init();
 </script>
 
 {#if canRender}

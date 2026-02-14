@@ -1,6 +1,11 @@
 import { AppName, type AppMessage } from "../types";
-import { updateRules } from "./helpers";
-import { createStateMessage, saveAppState } from "./state";
+import { clearTabRules, updateRules } from "./helpers";
+import {
+  cleanupLegacyAppStateStorage,
+  createStateMessage,
+  deleteTabAppState,
+  saveAppState,
+} from "./state";
 
 console.log("executing service worker script");
 
@@ -8,15 +13,21 @@ function getActionTabOptions(tabId: number | undefined) {
   return typeof tabId === "number" ? { tabId } : {};
 }
 
-function createPopupMessageHandler(tabId: number | undefined) {
+function createPopupMessageHandler(port: chrome.runtime.Port) {
   return async (message: AppMessage) => {
     console.log("received popup message", message);
     switch (message.name) {
+      case "get-app-state": {
+        const stateMessage = await createStateMessage(message.payload.tabId);
+        port.postMessage(stateMessage);
+        break;
+      }
       case "save-app-state": {
-        saveAppState(tabId, message.payload);
-        await updateRules(tabId, message.payload.extensionIsActive);
+        const { tabId, appState } = message.payload;
+        await saveAppState(tabId, appState);
+        await updateRules(tabId, appState.extensionIsActive);
 
-        if (message.payload.extensionIsActive) {
+        if (appState.extensionIsActive) {
           chrome.action.setIcon({
             ...getActionTabOptions(tabId),
             path: "assets/script-active.png",
@@ -45,19 +56,19 @@ function createPopupMessageHandler(tabId: number | undefined) {
 // TODO rethink if it is really needed to update popup and content script by their ports, it seems that it is not needed at the end
 chrome.runtime.onConnect.addListener(async (port) => {
   console.log("Service Worker::onConnect", port);
-  const tabId = port.sender?.tab?.id;
-  const stateMessage = await createStateMessage(tabId);
-  console.log("Service Worker::stateMessage", stateMessage);
+
   if (port.name === AppName.Popup) {
     console.log("popup open detected");
-    port.postMessage(stateMessage);
-    const popupMessageHandler = createPopupMessageHandler(tabId);
+    const popupMessageHandler = createPopupMessageHandler(port);
     port.onMessage.addListener(popupMessageHandler);
     port.onDisconnect.addListener(() => {
       port.onMessage.removeListener(popupMessageHandler);
     });
   } else if (port.name.includes(AppName.ContentScript)) {
     console.log("content script detected");
+    const tabId = port.sender?.tab?.id;
+    const stateMessage = await createStateMessage(tabId);
+    console.log("Service Worker::stateMessage", stateMessage);
     port.postMessage(stateMessage);
     port.onDisconnect.addListener(() => {
       // no-op
@@ -68,6 +79,8 @@ chrome.runtime.onConnect.addListener(async (port) => {
 });
 
 async function init() {
+  await cleanupLegacyAppStateStorage();
+
   const activeTabs = await chrome.tabs.query({
     active: true,
   });
@@ -85,6 +98,11 @@ async function init() {
       target: { tabId: tab },
       files: ["./contentScript.js"],
     });
+  });
+
+  chrome.tabs.onRemoved.addListener(async (tabId) => {
+    await deleteTabAppState(tabId);
+    await clearTabRules(tabId);
   });
 
   activeTabs.forEach(async (tab) => {

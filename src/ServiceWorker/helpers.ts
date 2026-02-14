@@ -53,6 +53,14 @@ async function updateRules(tabId: number | undefined, applyAppRules: boolean) {
   });
 }
 
+async function clearTabRules(tabId: number) {
+  const { allowRuleId, blockRuleId } = getTabRuleIds(tabId);
+  await chrome.declarativeNetRequest.updateSessionRules({
+    removeRuleIds: [allowRuleId, blockRuleId],
+    addRules: [],
+  });
+}
+
 function updateContentScript(
   port: chrome.runtime.Port,
   newState: AppStateMessage["payload"],
@@ -64,4 +72,4 @@ function updateContentScript(
   port.postMessage(stateMessage);
 }
 
-export { updateRules, updateContentScript };
+export { updateRules, clearTabRules, updateContentScript };
