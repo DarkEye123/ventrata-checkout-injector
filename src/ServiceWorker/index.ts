@@ -79,7 +79,11 @@ chrome.runtime.onConnect.addListener(async (port) => {
 });
 
 async function init() {
-  await runMigrations();
+  try {
+    await runMigrations();
+  } catch (error) {
+    console.error("Service Worker::migration runner failed", error);
+  }
 
   const activeTabs = await chrome.tabs.query({
     active: true,

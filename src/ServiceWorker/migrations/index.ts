@@ -32,9 +32,16 @@ async function runMigrations() {
     }
 
     console.log(`Service Worker::running migration ${migration.id}`);
-    await migration.run();
-    appliedMigrations.add(migration.id);
-    await saveAppliedMigrations(Array.from(appliedMigrations));
+    try {
+      await migration.run();
+      appliedMigrations.add(migration.id);
+      await saveAppliedMigrations(Array.from(appliedMigrations));
+    } catch (error) {
+      console.error(
+        `Service Worker::migration ${migration.id} failed`,
+        error,
+      );
+    }
   }
 }
 
