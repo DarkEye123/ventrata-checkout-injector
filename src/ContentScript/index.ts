@@ -1,5 +1,5 @@
 import { AppName, type AppMessage } from "../types";
-import { injectScript } from "./helpers";
+import { injectScript, setOriginalScriptCleanupEnabled } from "./helpers";
 
 function messageHandler(message: AppMessage) {
   switch (message.name) {
@@ -9,7 +9,17 @@ function messageHandler(message: AppMessage) {
           message.payload.appVersion,
           message.payload.checkoutScriptConfigOverrides,
         );
+      } else {
+        setOriginalScriptCleanupEnabled(false);
       }
+      break;
+    }
+    default: {
+      console.warn(
+        "Ventrata Injector::unexpected content script message",
+        message.name,
+      );
+      break;
     }
   }
 }
@@ -35,6 +45,7 @@ function init() {
 
     port.onDisconnect.addListener(() => {
       console.log("Ventrata Injector::content script disconnected");
+      setOriginalScriptCleanupEnabled(false);
       window.VentrataInjector = window.VentrataInjector ?? {
         contentScriptInjected: false,
       };

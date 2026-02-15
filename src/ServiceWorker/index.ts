@@ -13,6 +13,34 @@ function getActionTabOptions(tabId: number | undefined) {
   return typeof tabId === "number" ? { tabId } : {};
 }
 
+function isInjectableTabUrl(url?: string) {
+  return typeof url === "string" && /^https?:\/\//.test(url);
+}
+
+async function injectTabScripts(tabId: number) {
+  try {
+    const tab = await chrome.tabs.get(tabId);
+    if (!isInjectableTabUrl(tab.url)) {
+      return;
+    }
+
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      files: ["./pageHook.js"],
+      world: "MAIN",
+    });
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      files: ["./contentScript.js"],
+    });
+  } catch (error) {
+    console.warn("Service Worker::failed to inject tab scripts", {
+      tabId,
+      error,
+    });
+  }
+}
+
 function createPopupMessageHandler(port: chrome.runtime.Port) {
   return async (message: AppMessage) => {
     console.log("received popup message", message);
@@ -91,17 +119,14 @@ async function init() {
 
   chrome.tabs.onActivated.addListener(async (tab) => {
     const { tabId } = tab;
-    chrome.scripting.executeScript({
-      target: { tabId },
-      files: ["./contentScript.js"],
-    });
+    await injectTabScripts(tabId);
   });
 
-  chrome.tabs.onUpdated.addListener(async (tab) => {
-    chrome.scripting.executeScript({
-      target: { tabId: tab },
-      files: ["./contentScript.js"],
-    });
+  chrome.tabs.onUpdated.addListener(async (tabId, changeInfo) => {
+    if (!changeInfo.status && !changeInfo.url) {
+      return;
+    }
+    await injectTabScripts(tabId);
   });
 
   chrome.tabs.onRemoved.addListener(async (tabId) => {
@@ -111,10 +136,7 @@ async function init() {
 
   activeTabs.forEach(async (tab) => {
     if (tab.id) {
-      chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        files: ["./contentScript.js"],
-      });
+      await injectTabScripts(tab.id);
     }
   });
 }
