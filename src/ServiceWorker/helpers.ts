@@ -11,11 +11,15 @@ function getTabRuleIds(tabId: number) {
   };
 }
 
-async function updateRules(tabId: number | undefined, applyAppRules: boolean) {
+async function cleanupLegacyDynamicRules() {
   await chrome.declarativeNetRequest.updateDynamicRules({
     removeRuleIds: LEGACY_DYNAMIC_RULE_IDS,
     addRules: [],
   });
+}
+
+async function updateRules(tabId: number | undefined, applyAppRules: boolean) {
+  await cleanupLegacyDynamicRules();
 
   if (typeof tabId !== "number") {
     return;
@@ -72,4 +76,9 @@ function updateContentScript(
   port.postMessage(stateMessage);
 }
 
-export { updateRules, clearTabRules, updateContentScript };
+export {
+  updateRules,
+  clearTabRules,
+  cleanupLegacyDynamicRules,
+  updateContentScript,
+};

@@ -1,7 +1,7 @@
 import { AppName, type AppMessage } from "../types";
 import { clearTabRules, updateRules } from "./helpers";
+import { runMigrations } from "./migrations";
 import {
-  cleanupLegacyAppStateStorage,
   createStateMessage,
   deleteTabAppState,
   saveAppState,
@@ -79,7 +79,7 @@ chrome.runtime.onConnect.addListener(async (port) => {
 });
 
 async function init() {
-  await cleanupLegacyAppStateStorage();
+  await runMigrations();
 
   const activeTabs = await chrome.tabs.query({
     active: true,
