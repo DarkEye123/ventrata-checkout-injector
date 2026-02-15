@@ -91,6 +91,26 @@
           appStateSyncReady();
         }}
       />
+      <Switch
+        class="justify-self-center"
+        size="md"
+        onLabel="ON"
+        offLabel="OFF"
+        color="blue"
+        label="Test mode"
+        checked={$stateStore.checkoutScriptConfigOverrides?.env === "test"}
+        on:change={() => {
+          $stateStore.checkoutScriptConfigOverrides = {
+            ...($stateStore.checkoutScriptConfigOverrides ?? { env: "live" }),
+            env:
+              ($stateStore.checkoutScriptConfigOverrides?.env ?? "live") ===
+              "test"
+                ? "live"
+                : "test",
+          };
+          appStateSyncReady();
+        }}
+      />
     </div>
   </section>
 </Panel>

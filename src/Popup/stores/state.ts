@@ -3,6 +3,9 @@ import type { AppState } from "../../types";
 
 const stateStore = writable<AppState>({
   extensionIsActive: false,
+  checkoutScriptConfigOverrides: {
+    env: "live",
+  },
   appVersion: "",
 });
 

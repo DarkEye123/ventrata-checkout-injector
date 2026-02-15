@@ -1,8 +1,11 @@
 import { isPublicEnvironment, isTunneledEnvironment } from "../commonUtils";
-import { ScriptReference } from "../types";
+import { ScriptReference, type CheckoutScriptConfigOverrides } from "../types";
 
 // ScriptReference is needed for dynamic ruleset
-function injectScript(version?: string) {
+function injectScript(
+  version?: string,
+  checkoutScriptConfigOverrides?: CheckoutScriptConfigOverrides,
+) {
   let inclusionPath = version ?? "staging"; // just try for quick comparison reference pr/451
   inclusionPath = isPublicEnvironment(inclusionPath)
     ? inclusionPath
@@ -20,16 +23,28 @@ function injectScript(version?: string) {
     const newScript = document.createElement("script");
 
     newScript.type = "module";
-    newScript.dataset.config = originalScript.dataset.config;
-    // const originalConfiguration = JSON.parse(
-    //   originalScript.dataset.config || "{}",
-    // );
-    // newScript.dataset.config = JSON.stringify({
-    //   ...originalConfiguration,
-    //   env: "test",
-    // });
+    const originalConfigurationRaw = originalScript.dataset.config;
+    let parsedConfig: Record<string, unknown> = {};
+    if (originalConfigurationRaw) {
+      try {
+        parsedConfig = JSON.parse(originalConfigurationRaw);
+      } catch (error) {
+        console.warn(
+          "Failed to parse original script config, fallback to extension config only",
+          error,
+        );
+      }
+    }
+    const resolvedEnv =
+      checkoutScriptConfigOverrides?.env === "test" ? "test" : "live";
+    newScript.dataset.config = JSON.stringify({
+      ...parsedConfig,
+      ...(checkoutScriptConfigOverrides ?? {}),
+      env: resolvedEnv,
+    });
     // newScript.defer = true;
 
+    originalScript.remove();
     newScript.src = newURL;
 
     document.body.appendChild(newScript);

@@ -28,12 +28,21 @@
       case "app-state": {
         appStateSyncInProgress.set(true);
         canRender = true;
-        const { appVersion, extensionIsActive, ghAccessToken } =
+        const {
+          appVersion,
+          extensionIsActive,
+          checkoutScriptConfigOverrides,
+          ghAccessToken,
+        } =
           message.payload;
         stateStore.update((state) => ({
           ...state,
           appVersion,
           extensionIsActive,
+          checkoutScriptConfigOverrides: {
+            ...(checkoutScriptConfigOverrides ?? {}),
+            env: checkoutScriptConfigOverrides?.env === "test" ? "test" : "live",
+          },
         }));
         if (ghAccessToken && ghAccessToken !== $stateStore.ghAccessToken) {
           $stateStore.ghAccessToken = ghAccessToken;

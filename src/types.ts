@@ -1,5 +1,11 @@
+type CheckoutScriptConfigOverrides = {
+  env: "live" | "test";
+  [key: string]: unknown;
+};
+
 type AppState = {
   extensionIsActive: boolean;
+  checkoutScriptConfigOverrides: CheckoutScriptConfigOverrides;
   appVersion: string;
   ghAccessToken?: string;
 };
@@ -53,6 +59,7 @@ export {
   Staging,
   Production,
   SupportedEnvironments,
+  type CheckoutScriptConfigOverrides,
   type AppState,
   type AppStateMessage,
 };
