@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import { AppName, type AppMessage } from "../types";
   import {
     handleGHAccessTokenUpdate,
@@ -76,7 +77,9 @@
     activeView = view.default;
   });
 
-  init();
+  onMount(() => {
+    init();
+  });
 </script>
 
 {#if canRender}
