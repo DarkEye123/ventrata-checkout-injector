@@ -1,4 +1,8 @@
-import type { AppMessage, SaveAppStateMessage } from "../types";
+import type {
+  AppMessage,
+  GetAppStateMessage,
+  SaveAppStateMessage,
+} from "../types";
 import { Octokit } from "@octokit/core";
 import { restEndpointMethods } from "@octokit/plugin-rest-endpoint-methods";
 import type { Option } from "./types";
@@ -8,14 +12,31 @@ const MyOctokit = Octokit.plugin(restEndpointMethods);
 
 function sendSaveAppStateMessage(
   port: chrome.runtime.Port,
-  payload: SaveAppStateMessage["payload"],
+  appState: SaveAppStateMessage["payload"]["appState"],
+  tabId?: number,
 ) {
-  const stateMessage: SaveAppStateMessage = { name: "save-app-state", payload };
+  const stateMessage: SaveAppStateMessage = {
+    name: "save-app-state",
+    payload: { appState, tabId },
+  };
+  sendMessage(port, stateMessage);
+}
+
+function sendGetAppStateMessage(port: chrome.runtime.Port, tabId?: number) {
+  const stateMessage: GetAppStateMessage = {
+    name: "get-app-state",
+    payload: { tabId },
+  };
   sendMessage(port, stateMessage);
 }
 
 function sendMessage(port: chrome.runtime.Port, message: AppMessage) {
   port.postMessage(message);
+}
+
+async function readCurrentActiveTabId(): Promise<number | undefined> {
+  const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+  return tabs[0]?.id;
 }
 
 async function readAllPullRequestsNumbers(ghAccessToken: string) {
@@ -60,5 +81,7 @@ export {
   handleGHAccessTokenUpdate,
   sendMessage,
   sendSaveAppStateMessage,
+  sendGetAppStateMessage,
+  readCurrentActiveTabId,
   readAllPullRequestsNumbers,
 };

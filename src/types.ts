@@ -19,9 +19,19 @@ interface GenericMessage {
   payload?: unknown;
 }
 
+interface GetAppStateMessage extends GenericMessage {
+  name: "get-app-state";
+  payload: {
+    tabId?: number;
+  };
+}
+
 interface SaveAppStateMessage extends GenericMessage {
   name: "save-app-state";
-  payload: AppState;
+  payload: {
+    tabId?: number;
+    appState: AppState;
+  };
 }
 
 interface AppStateMessage extends GenericMessage {
@@ -29,7 +39,7 @@ interface AppStateMessage extends GenericMessage {
   payload: AppState;
 }
 
-type AppMessage = AppStateMessage | SaveAppStateMessage;
+type AppMessage = AppStateMessage | SaveAppStateMessage | GetAppStateMessage;
 
 const ScriptReference = "?ref=ventrata-injector-extension";
 
@@ -38,6 +48,7 @@ export {
   type GenericMessage,
   ScriptReference,
   type AppMessage,
+  type GetAppStateMessage,
   type SaveAppStateMessage,
   Staging,
   Production,
