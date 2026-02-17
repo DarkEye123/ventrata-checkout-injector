@@ -59,3 +59,11 @@ Recent history follows concise, Conventional-Commit-style subjects such as `feat
 
 - Copy `.env.example` to `.env` for local setup; never commit secrets.
 - Treat `public/manifest.json` permission changes (`permissions`, `host_permissions`) as high-impact and call them out explicitly in PRs.
+
+## Checkout Injection Notes
+
+- Do not use a `MutationObserver` to continuously remove checkout script tags. Most customer integrations load checkout statically, and observer-based cleanup can remove legitimate scripts before replacement is ready.
+- Keep original script blocking at the network layer via Declarative Net Request session rules in the service worker.
+- Current blocking model is intentional:
+  - allow checkout script requests that include the injector reference query (`?ref=ventrata-injector-extension`)
+  - block the original production checkout script URL without that reference
