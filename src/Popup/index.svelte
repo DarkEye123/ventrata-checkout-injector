@@ -10,10 +10,7 @@
   import { Button } from "@svelteuidev/core";
   import { viewMap, type ViewComponent } from "./Views/viewMap";
   import { currentViewName } from "./stores/navigation";
-  import stateStore, {
-    appStateSyncInProgress,
-    saveActionInProgress,
-  } from "./stores/state";
+  import stateStore, { appStateSyncInProgress, saveActionInProgress } from "./stores/state";
 
   const port = chrome.runtime.connect({
     name: `${AppName.Popup}`,
@@ -28,20 +25,15 @@
       case "app-state": {
         appStateSyncInProgress.set(true);
         canRender = true;
-        const {
-          appVersion,
-          extensionIsActive,
-          checkoutScriptConfigOverrides,
-          ghAccessToken,
-        } = message.payload;
+        const { appVersion, extensionIsActive, checkoutScriptConfigOverrides, ghAccessToken } =
+          message.payload;
         stateStore.update((state) => ({
           ...state,
           appVersion,
           extensionIsActive,
           checkoutScriptConfigOverrides: {
             ...(checkoutScriptConfigOverrides ?? {}),
-            env:
-              checkoutScriptConfigOverrides?.env === "test" ? "test" : "live",
+            env: checkoutScriptConfigOverrides?.env === "test" ? "test" : "live",
           },
         }));
         if (ghAccessToken && ghAccessToken !== $stateStore.ghAccessToken) {
@@ -101,8 +93,7 @@
         compact
         uppercase
         ripple
-        on:click={() => currentViewName.set(navigationItem)}
-        >{navigationItem}</Button
+        on:click={() => currentViewName.set(navigationItem)}>{navigationItem}</Button
       >
     {/each}
   </nav>

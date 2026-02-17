@@ -42,29 +42,20 @@ function getTabAppStateKey(tabId: number) {
 
 function readGlobalAppState(): Promise<Partial<AppState>> {
   return new Promise((resolve) => {
-    chrome.storage.local.get(
-      [GLOBAL_APP_STATE_KEY, LEGACY_GLOBAL_APP_STATE_KEY],
-      (value) => {
-        const globalAppState = (value[GLOBAL_APP_STATE_KEY] ?? {}) as Partial<
-          AppState
-        >;
-        const legacyAppState = (
-          value[LEGACY_GLOBAL_APP_STATE_KEY] ?? {}
-        ) as Partial<AppState>;
-        resolve({
-          ghAccessToken: globalAppState.ghAccessToken ?? legacyAppState.ghAccessToken,
-        });
-      },
-    );
+    chrome.storage.local.get([GLOBAL_APP_STATE_KEY, LEGACY_GLOBAL_APP_STATE_KEY], (value) => {
+      const globalAppState = (value[GLOBAL_APP_STATE_KEY] ?? {}) as Partial<AppState>;
+      const legacyAppState = (value[LEGACY_GLOBAL_APP_STATE_KEY] ?? {}) as Partial<AppState>;
+      resolve({
+        ghAccessToken: globalAppState.ghAccessToken ?? legacyAppState.ghAccessToken,
+      });
+    });
   });
 }
 
 function readTabAppState(tabId: number): Promise<Partial<AppState>> {
   return new Promise((resolve) => {
     chrome.storage.session.get(getTabAppStateKey(tabId), (value) => {
-      const tabState = value[getTabAppStateKey(tabId)] as
-        | TabScopedAppState
-        | undefined;
+      const tabState = value[getTabAppStateKey(tabId)] as TabScopedAppState | undefined;
       resolve(tabState ?? {});
     });
   });
@@ -106,10 +97,7 @@ function saveTabAppState(tabId: number, appState: AppState): Promise<void> {
       appVersion: appState.appVersion,
       checkoutScriptConfigOverrides: appState.checkoutScriptConfigOverrides,
     };
-    chrome.storage.session.set(
-      { [getTabAppStateKey(tabId)]: tabScopedState },
-      () => resolve(),
-    );
+    chrome.storage.session.set({ [getTabAppStateKey(tabId)]: tabScopedState }, () => resolve());
   });
 }
 
@@ -136,9 +124,4 @@ function cleanupLegacyAppStateStorage(): Promise<void> {
   });
 }
 
-export {
-  createStateMessage,
-  saveAppState,
-  deleteTabAppState,
-  cleanupLegacyAppStateStorage,
-};
+export { createStateMessage, saveAppState, deleteTabAppState, cleanupLegacyAppStateStorage };

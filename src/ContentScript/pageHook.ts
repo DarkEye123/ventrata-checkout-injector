@@ -40,16 +40,10 @@ function wrapProgrammaticVentrata() {
   }
 
   const currentVentrata = window.Ventrata as VentrataFn;
-  const originalVentrata =
-    currentVentrata.__ventrataInjectorOriginal ?? currentVentrata;
+  const originalVentrata = currentVentrata.__ventrataInjectorOriginal ?? currentVentrata;
 
-  const wrappedVentrata: VentrataFn = function (
-    this: unknown,
-    config,
-    ...args
-  ) {
-    const configObject =
-      config && typeof config === "object" ? config : {};
+  const wrappedVentrata: VentrataFn = function (this: unknown, config, ...args) {
+    const configObject = config && typeof config === "object" ? config : {};
     return originalVentrata.call(
       this,
       {

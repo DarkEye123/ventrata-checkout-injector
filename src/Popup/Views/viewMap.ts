@@ -11,13 +11,11 @@ const viewMap: Record<
   }
 > = {
   home: {
-    default: () =>
-      import("./Home.svelte") as Promise<{ default: ViewComponent }>,
+    default: () => import("./Home.svelte") as Promise<{ default: ViewComponent }>,
     navigationList: ["settings"],
   },
   settings: {
-    default: () =>
-      import("./Settings.svelte") as Promise<{ default: ViewComponent }>,
+    default: () => import("./Settings.svelte") as Promise<{ default: ViewComponent }>,
     navigationList: ["home"],
   },
 };

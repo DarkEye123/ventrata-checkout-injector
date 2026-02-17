@@ -23,9 +23,9 @@
     appStateSyncReady();
   };
 
-  const handleOnCustomAppVersionInput: (event: {
-    currentTarget: HTMLInputElement;
-  }) => void = ({ currentTarget }) => {
+  const handleOnCustomAppVersionInput: (event: { currentTarget: HTMLInputElement }) => void = ({
+    currentTarget,
+  }) => {
     $stateStore.appVersion = String(currentTarget.value);
     publicAppVersionInput.value = "";
     if (!currentTarget.value) {
@@ -42,9 +42,7 @@
         class="w-full"
         bind:element={publicAppVersionInput}
         data={$supportedAppTargetVersionsStore}
-        value={isPublicEnvironment($stateStore.appVersion)
-          ? $stateStore.appVersion
-          : ""}
+        value={isPublicEnvironment($stateStore.appVersion) ? $stateStore.appVersion : ""}
         on:change={handleOnVersionSelect}
         placeholder="Pick one"
         label="Select checkout version"
@@ -68,9 +66,7 @@
         placeholder="Set PR version manually"
         class="svelteUI-parody"
         bind:this={customAppVersionInput}
-        value={!isPublicEnvironment($stateStore.appVersion)
-          ? $stateStore.appVersion
-          : ""}
+        value={!isPublicEnvironment($stateStore.appVersion) ? $stateStore.appVersion : ""}
         on:blur={handleOnCustomAppVersionInput}
         on:keydown={(event) => {
           if (event.key === "Enter") {
@@ -103,8 +99,7 @@
           $stateStore.checkoutScriptConfigOverrides = {
             ...($stateStore.checkoutScriptConfigOverrides ?? { env: "live" }),
             env:
-              ($stateStore.checkoutScriptConfigOverrides?.env ?? "live") ===
-              "test"
+              ($stateStore.checkoutScriptConfigOverrides?.env ?? "live") === "test"
                 ? "live"
                 : "test",
           };

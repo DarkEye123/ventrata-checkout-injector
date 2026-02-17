@@ -5,20 +5,14 @@ function messageHandler(message: AppMessage) {
   switch (message.name) {
     case "app-state": {
       if (message.payload.extensionIsActive) {
-        injectScript(
-          message.payload.appVersion,
-          message.payload.checkoutScriptConfigOverrides,
-        );
+        injectScript(message.payload.appVersion, message.payload.checkoutScriptConfigOverrides);
       } else {
         setOriginalScriptCleanupEnabled(false);
       }
       break;
     }
     default: {
-      console.warn(
-        "Ventrata Injector::unexpected content script message",
-        message.name,
-      );
+      console.warn("Ventrata Injector::unexpected content script message", message.name);
       break;
     }
   }

@@ -1,11 +1,7 @@
 import { AppName, type AppMessage } from "../types";
 import { clearTabRules, updateRules } from "./helpers";
 import { runMigrations } from "./migrations";
-import {
-  createStateMessage,
-  deleteTabAppState,
-  saveAppState,
-} from "./state";
+import { createStateMessage, deleteTabAppState, saveAppState } from "./state";
 
 console.log("executing service worker script");
 
