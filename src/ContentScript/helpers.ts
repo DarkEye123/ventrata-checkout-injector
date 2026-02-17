@@ -5,7 +5,6 @@ const CHECKOUT_SCRIPT_PATH = "/v3/production/ventrata-checkout.min.js";
 const INJECTOR_REF_PARAM_KEY = "ref";
 const INJECTOR_REF_PARAM_VALUE = "ventrata-injector-extension";
 const PAGE_HOOK_MESSAGE_TYPE = "ventrata-injector:apply-overrides";
-let originalScriptCleanupObserver: MutationObserver | undefined;
 
 function getScriptUrl(script: HTMLScriptElement) {
   try {
@@ -24,55 +23,6 @@ function isOriginalCheckoutScript(script: HTMLScriptElement) {
   const hasInjectorRef =
     scriptUrl.searchParams.get(INJECTOR_REF_PARAM_KEY) === INJECTOR_REF_PARAM_VALUE;
   return isCheckoutProductionScript && !hasInjectorRef;
-}
-
-function removeOriginalScriptsFromElement(element: Element) {
-  if (element instanceof HTMLScriptElement && isOriginalCheckoutScript(element)) {
-    element.remove();
-  }
-  const nestedScripts = Array.from(element.querySelectorAll("script[src]")) as HTMLScriptElement[];
-  nestedScripts
-    .filter((nestedScript) => isOriginalCheckoutScript(nestedScript))
-    .forEach((nestedScript) => nestedScript.remove());
-}
-
-function setOriginalScriptCleanupEnabled(enabled: boolean) {
-  if (!enabled) {
-    originalScriptCleanupObserver?.disconnect();
-    originalScriptCleanupObserver = undefined;
-    return;
-  }
-
-  if (originalScriptCleanupObserver || !document.documentElement) {
-    return;
-  }
-
-  originalScriptCleanupObserver = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
-      if (mutation.type === "childList") {
-        mutation.addedNodes.forEach((addedNode) => {
-          if (addedNode instanceof Element) {
-            removeOriginalScriptsFromElement(addedNode);
-          }
-        });
-        return;
-      }
-
-      if (mutation.type === "attributes") {
-        const target = mutation.target;
-        if (target instanceof HTMLScriptElement && isOriginalCheckoutScript(target)) {
-          target.remove();
-        }
-      }
-    });
-  });
-
-  originalScriptCleanupObserver.observe(document.documentElement, {
-    childList: true,
-    subtree: true,
-    attributes: true,
-    attributeFilter: ["src"],
-  });
 }
 
 function resolveCheckoutScriptConfigOverrides(
@@ -103,7 +53,6 @@ function injectScript(
   version?: string,
   checkoutScriptConfigOverrides?: CheckoutScriptConfigOverrides,
 ) {
-  setOriginalScriptCleanupEnabled(true);
   const resolvedCheckoutScriptConfigOverrides = resolveCheckoutScriptConfigOverrides(
     checkoutScriptConfigOverrides,
   );
@@ -158,4 +107,3 @@ function injectScript(
 }
 
 export { injectScript };
-export { setOriginalScriptCleanupEnabled };

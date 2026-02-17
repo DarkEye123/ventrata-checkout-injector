@@ -1,13 +1,11 @@
 import { AppName, type AppMessage } from "../types";
-import { injectScript, setOriginalScriptCleanupEnabled } from "./helpers";
+import { injectScript } from "./helpers";
 
 function messageHandler(message: AppMessage) {
   switch (message.name) {
     case "app-state": {
       if (message.payload.extensionIsActive) {
         injectScript(message.payload.appVersion, message.payload.checkoutScriptConfigOverrides);
-      } else {
-        setOriginalScriptCleanupEnabled(false);
       }
       break;
     }
@@ -39,7 +37,6 @@ function init() {
 
     port.onDisconnect.addListener(() => {
       console.log("Ventrata Injector::content script disconnected");
-      setOriginalScriptCleanupEnabled(false);
       window.VentrataInjector = window.VentrataInjector ?? {
         contentScriptInjected: false,
       };
