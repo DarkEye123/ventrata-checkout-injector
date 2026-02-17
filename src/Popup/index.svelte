@@ -33,15 +33,15 @@
           extensionIsActive,
           checkoutScriptConfigOverrides,
           ghAccessToken,
-        } =
-          message.payload;
+        } = message.payload;
         stateStore.update((state) => ({
           ...state,
           appVersion,
           extensionIsActive,
           checkoutScriptConfigOverrides: {
             ...(checkoutScriptConfigOverrides ?? {}),
-            env: checkoutScriptConfigOverrides?.env === "test" ? "test" : "live",
+            env:
+              checkoutScriptConfigOverrides?.env === "test" ? "test" : "live",
           },
         }));
         if (ghAccessToken && ghAccessToken !== $stateStore.ghAccessToken) {
@@ -64,7 +64,6 @@
       saveButtonEnabled = false;
     }, 1000); // visual UX feedback
 
-    console.log("here");
     sendSaveAppStateMessage(port, $stateStore, activeTabId);
   };
 

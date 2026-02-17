@@ -79,7 +79,7 @@
         }}
       />
       <Switch
-        class="justify-self-center"
+        class="w-full justify-self-center"
         size="md"
         onLabel="ON"
         offLabel="OFF"
@@ -92,7 +92,7 @@
         }}
       />
       <Switch
-        class="justify-self-center"
+        class="w-full justify-self-center [&_input]:h-2"
         size="md"
         onLabel="ON"
         offLabel="OFF"
