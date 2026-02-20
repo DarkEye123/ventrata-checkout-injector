@@ -67,3 +67,9 @@ Recent history follows concise, Conventional-Commit-style subjects such as `feat
 - Current blocking model is intentional:
   - allow checkout script requests that include the injector reference query (`?ref=ventrata-injector-extension`)
   - block the original production checkout script URL without that reference
+- `data-config` compliance is strict for this extension path:
+  - customer checkout `data-config` is expected to be valid JSON
+  - if `data-config` is invalid and parsing fails, extension behavior may fail as well
+  - this is acceptable because an invalid checkout configuration is already considered customer-visible checkout failure
+- QA intent of this extension is to test new releases, PR builds, or local checkout code on running customer sites while preserving their real environment context (`env`) and integration behavior before release.
+- Ventrata demo sites remain useful for targeted flows and edge-case validation, but they do not fully represent real customer environments; this extension exists to make customer-like flow verification easier to reach.
