@@ -26,8 +26,7 @@
     }
   };
 
-  $: requestAccessButtonEnabled =
-    newAccessToken && newAccessToken !== $stateStore.ghAccessToken;
+  $: requestAccessButtonEnabled = newAccessToken && newAccessToken !== $stateStore.ghAccessToken;
 
   $: {
     if (requestAccessButtonEnabled) {
@@ -37,10 +36,7 @@
 </script>
 
 <Panel showBackButton>
-  <section
-    class="grid gap-6 rounded-lg border border-gray-200 p-4"
-    id="github-token"
-  >
+  <section class="grid gap-6 rounded-lg border border-gray-200 p-4" id="github-token">
     <TextInput
       fullSize
       label="Your GH Access Token"

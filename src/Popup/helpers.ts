@@ -1,8 +1,4 @@
-import type {
-  AppMessage,
-  GetAppStateMessage,
-  SaveAppStateMessage,
-} from "../types";
+import type { AppMessage, GetAppStateMessage, SaveAppStateMessage } from "../types";
 import { Octokit } from "@octokit/core";
 import { restEndpointMethods } from "@octokit/plugin-rest-endpoint-methods";
 import type { Option } from "./types";

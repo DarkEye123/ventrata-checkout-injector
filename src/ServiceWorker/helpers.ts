@@ -47,8 +47,7 @@ async function updateRules(tabId: number | undefined, applyAppRules: boolean) {
               type: chrome.declarativeNetRequest.RuleActionType.BLOCK,
             },
             condition: {
-              urlFilter:
-                "https://cdn.checkout.ventrata.com/v3/production/ventrata-checkout.min.js",
+              urlFilter: "https://cdn.checkout.ventrata.com/v3/production/ventrata-checkout.min.js",
               tabIds: [tabId],
             },
           },
@@ -65,10 +64,7 @@ async function clearTabRules(tabId: number) {
   });
 }
 
-function updateContentScript(
-  port: chrome.runtime.Port,
-  newState: AppStateMessage["payload"],
-) {
+function updateContentScript(port: chrome.runtime.Port, newState: AppStateMessage["payload"]) {
   const stateMessage: AppStateMessage = {
     name: "app-state",
     payload: newState,
@@ -76,9 +72,4 @@ function updateContentScript(
   port.postMessage(stateMessage);
 }
 
-export {
-  updateRules,
-  clearTabRules,
-  cleanupLegacyDynamicRules,
-  updateContentScript,
-};
+export { updateRules, clearTabRules, cleanupLegacyDynamicRules, updateContentScript };

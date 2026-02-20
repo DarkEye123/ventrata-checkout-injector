@@ -59,6 +59,26 @@ const contentScript = defineConfig({
   },
 });
 
+const pageHookScript = defineConfig({
+  build: {
+    emptyOutDir: false,
+    watch: watch ? {} : null,
+    rollupOptions: {
+      output: {
+        entryFileNames: "pageHook.js",
+      },
+    },
+    lib: {
+      entry: {
+        pageHook: "src/ContentScript/pageHook.ts",
+      },
+      name: "pageHook",
+      formats: ["iife"],
+    },
+  },
+});
+
 build({ ...svelteConfig, configFile: false });
 build({ ...contentScript, configFile: false });
+build({ ...pageHookScript, configFile: false });
 build({ ...workerConfig, configFile: false });

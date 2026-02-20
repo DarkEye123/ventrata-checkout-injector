@@ -16,9 +16,8 @@ function readAppliedMigrations(): Promise<string[]> {
 
 function saveAppliedMigrations(appliedMigrationIds: string[]): Promise<void> {
   return new Promise((resolve) => {
-    chrome.storage.local.set(
-      { [APPLIED_MIGRATIONS_STORAGE_KEY]: appliedMigrationIds },
-      () => resolve(),
+    chrome.storage.local.set({ [APPLIED_MIGRATIONS_STORAGE_KEY]: appliedMigrationIds }, () =>
+      resolve(),
     );
   });
 }
@@ -37,10 +36,7 @@ async function runMigrations() {
       appliedMigrations.add(migration.id);
       await saveAppliedMigrations(Array.from(appliedMigrations));
     } catch (error) {
-      console.error(
-        `Service Worker::migration ${migration.id} failed`,
-        error,
-      );
+      console.error(`Service Worker::migration ${migration.id} failed`, error);
     }
   }
 }

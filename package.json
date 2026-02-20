@@ -6,9 +6,10 @@
   "author": "Matej Leško <lesko.matej.pu@gmail.com>",
   "scripts": {
     "dev": "node multiple-entries-config.js --watch",
-    "build": "node multiple-entries-config.js",
+    "build": "rm -rf dist; node multiple-entries-config.js",
     "release": "rm -rf dist ventrata-checkout-injector.zip; node multiple-entries-config.js; cd dist; zip -r ../ventrata-checkout-injector.zip *; cd ..",
-    "check": "svelte-check --tsconfig ./tsconfig.json"
+    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "format": "prettier . --write"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^3.1.1",

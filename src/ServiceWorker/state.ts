@@ -1,7 +1,15 @@
-import { Staging, type AppState, type AppStateMessage } from "../types";
+import {
+  Staging,
+  type AppState,
+  type AppStateMessage,
+  type CheckoutScriptConfigOverrides,
+} from "../types";
 
 const DEFAULT_APP_STATE: AppState = {
   extensionIsActive: false,
+  checkoutScriptConfigOverrides: {
+    env: "live",
+  },
   appVersion: Staging,
 };
 
@@ -10,12 +18,21 @@ const LEGACY_GLOBAL_APP_STATE_KEY = "appState";
 const LEGACY_TAB_APP_STATE_KEY = "appStateByTab";
 const TAB_APP_STATE_KEY_PREFIX = "tabAppState:";
 
-type TabScopedAppState = Pick<AppState, "extensionIsActive" | "appVersion">;
+type TabScopedAppState = Pick<
+  AppState,
+  "extensionIsActive" | "appVersion" | "checkoutScriptConfigOverrides"
+>;
 
 function normalizeAppState(appState?: Partial<AppState>): AppState {
+  const configOverrides = appState?.checkoutScriptConfigOverrides;
   return {
     ...DEFAULT_APP_STATE,
     ...(appState ?? {}),
+    checkoutScriptConfigOverrides: {
+      ...DEFAULT_APP_STATE.checkoutScriptConfigOverrides,
+      ...(configOverrides ?? {}),
+      env: configOverrides?.env === "test" ? "test" : "live",
+    } satisfies CheckoutScriptConfigOverrides,
   };
 }
 
@@ -25,29 +42,20 @@ function getTabAppStateKey(tabId: number) {
 
 function readGlobalAppState(): Promise<Partial<AppState>> {
   return new Promise((resolve) => {
-    chrome.storage.local.get(
-      [GLOBAL_APP_STATE_KEY, LEGACY_GLOBAL_APP_STATE_KEY],
-      (value) => {
-        const globalAppState = (value[GLOBAL_APP_STATE_KEY] ?? {}) as Partial<
-          AppState
-        >;
-        const legacyAppState = (
-          value[LEGACY_GLOBAL_APP_STATE_KEY] ?? {}
-        ) as Partial<AppState>;
-        resolve({
-          ghAccessToken: globalAppState.ghAccessToken ?? legacyAppState.ghAccessToken,
-        });
-      },
-    );
+    chrome.storage.local.get([GLOBAL_APP_STATE_KEY, LEGACY_GLOBAL_APP_STATE_KEY], (value) => {
+      const globalAppState = (value[GLOBAL_APP_STATE_KEY] ?? {}) as Partial<AppState>;
+      const legacyAppState = (value[LEGACY_GLOBAL_APP_STATE_KEY] ?? {}) as Partial<AppState>;
+      resolve({
+        ghAccessToken: globalAppState.ghAccessToken ?? legacyAppState.ghAccessToken,
+      });
+    });
   });
 }
 
 function readTabAppState(tabId: number): Promise<Partial<AppState>> {
   return new Promise((resolve) => {
     chrome.storage.session.get(getTabAppStateKey(tabId), (value) => {
-      const tabState = value[getTabAppStateKey(tabId)] as
-        | TabScopedAppState
-        | undefined;
+      const tabState = value[getTabAppStateKey(tabId)] as TabScopedAppState | undefined;
       resolve(tabState ?? {});
     });
   });
@@ -87,11 +95,9 @@ function saveTabAppState(tabId: number, appState: AppState): Promise<void> {
     const tabScopedState: TabScopedAppState = {
       extensionIsActive: appState.extensionIsActive,
       appVersion: appState.appVersion,
+      checkoutScriptConfigOverrides: appState.checkoutScriptConfigOverrides,
     };
-    chrome.storage.session.set(
-      { [getTabAppStateKey(tabId)]: tabScopedState },
-      () => resolve(),
-    );
+    chrome.storage.session.set({ [getTabAppStateKey(tabId)]: tabScopedState }, () => resolve());
   });
 }
 
@@ -118,9 +124,4 @@ function cleanupLegacyAppStateStorage(): Promise<void> {
   });
 }
 
-export {
-  createStateMessage,
-  saveAppState,
-  deleteTabAppState,
-  cleanupLegacyAppStateStorage,
-};
+export { createStateMessage, saveAppState, deleteTabAppState, cleanupLegacyAppStateStorage };
