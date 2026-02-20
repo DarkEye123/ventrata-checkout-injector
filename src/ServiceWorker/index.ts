@@ -9,6 +9,49 @@ function getActionTabOptions(tabId: number | undefined) {
   return typeof tabId === "number" ? { tabId } : {};
 }
 
+async function resolveTabId(tabId: number | undefined): Promise<number | undefined> {
+  if (typeof tabId === "number") {
+    return tabId;
+  }
+
+  const activeTabs = await chrome.tabs.query({
+    active: true,
+    lastFocusedWindow: true,
+  });
+  return activeTabs[0]?.id;
+}
+
+function getActionIconPath(extensionIsActive: boolean) {
+  return extensionIsActive ? "assets/script-active.png" : "assets/script-inactive.png";
+}
+
+async function setActionIcon(tabId: number | undefined, extensionIsActive: boolean) {
+  if (typeof tabId !== "number") {
+    return;
+  }
+
+  await chrome.action.setIcon({
+    ...getActionTabOptions(tabId),
+    path: getActionIconPath(extensionIsActive),
+  });
+}
+
+async function syncActionIcon(tabId: number | undefined) {
+  if (typeof tabId !== "number") {
+    return;
+  }
+
+  try {
+    const stateMessage = await createStateMessage(tabId);
+    await setActionIcon(tabId, stateMessage.payload.extensionIsActive);
+  } catch (error) {
+    console.warn("Service Worker::failed to sync action icon", {
+      tabId,
+      error,
+    });
+  }
+}
+
 function isInjectableTabUrl(url?: string) {
   return typeof url === "string" && /^https?:\/\//.test(url);
 }
@@ -44,27 +87,18 @@ function createPopupMessageHandler(port: chrome.runtime.Port) {
       case "get-app-state": {
         const stateMessage = await createStateMessage(message.payload.tabId);
         port.postMessage(stateMessage);
+        await setActionIcon(message.payload.tabId, stateMessage.payload.extensionIsActive);
         break;
       }
       case "save-app-state": {
         const { tabId, appState } = message.payload;
-        await saveAppState(tabId, appState);
-        await updateRules(tabId, appState.extensionIsActive);
+        const resolvedTabId = await resolveTabId(tabId);
+        await saveAppState(resolvedTabId, appState);
+        await updateRules(resolvedTabId, appState.extensionIsActive);
+        await setActionIcon(resolvedTabId, appState.extensionIsActive);
 
-        if (appState.extensionIsActive) {
-          chrome.action.setIcon({
-            ...getActionTabOptions(tabId),
-            path: "assets/script-active.png",
-          });
-        } else {
-          chrome.action.setIcon({
-            ...getActionTabOptions(tabId),
-            path: "assets/script-inactive.png",
-          });
-        }
-
-        if (typeof tabId === "number") {
-          chrome.tabs.reload(tabId);
+        if (typeof resolvedTabId === "number") {
+          chrome.tabs.reload(resolvedTabId);
         } else {
           chrome.tabs.reload();
         }
@@ -94,6 +128,7 @@ chrome.runtime.onConnect.addListener(async (port) => {
     const stateMessage = await createStateMessage(tabId);
     console.log("Service Worker::stateMessage", stateMessage);
     port.postMessage(stateMessage);
+    await setActionIcon(tabId, stateMessage.payload.extensionIsActive);
     port.onDisconnect.addListener(() => {
       // no-op
     });
@@ -116,6 +151,7 @@ async function init() {
   chrome.tabs.onActivated.addListener(async (tab) => {
     const { tabId } = tab;
     await injectTabScripts(tabId);
+    await syncActionIcon(tabId);
   });
 
   chrome.tabs.onUpdated.addListener(async (tabId, changeInfo) => {
@@ -123,6 +159,7 @@ async function init() {
       return;
     }
     await injectTabScripts(tabId);
+    await syncActionIcon(tabId);
   });
 
   chrome.tabs.onRemoved.addListener(async (tabId) => {
@@ -133,6 +170,7 @@ async function init() {
   activeTabs.forEach(async (tab) => {
     if (tab.id) {
       await injectTabScripts(tab.id);
+      await syncActionIcon(tab.id);
     }
   });
 }
