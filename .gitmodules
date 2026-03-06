@@ -1,0 +1,3 @@
+[submodule "tools/codex-claude-utilities"]
+	path = tools/codex-claude-utilities
+	url = git@github.com:DarkEye123/codex-claude-utilities.git

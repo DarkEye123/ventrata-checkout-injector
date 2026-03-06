@@ -1,0 +1,1 @@
+../tools/codex-claude-utilities/hooks/install.sh

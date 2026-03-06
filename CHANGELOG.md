@@ -1,6 +1,5 @@
 # Changelog
 
-
 ## v1.1.0
 
 [compare changes](https://github.com/DarkEye123/ventrata-checkout-injector/compare/v1.0.1...v1.1.0)
@@ -24,4 +23,3 @@
 ### ❤️ Contributors
 
 - Matej Leško ([@DarkEye123](https://github.com/DarkEye123))
-

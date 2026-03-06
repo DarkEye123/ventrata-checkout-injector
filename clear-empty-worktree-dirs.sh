@@ -1,0 +1,1 @@
+tools/codex-claude-utilities/clear-empty-worktree-dirs.sh
