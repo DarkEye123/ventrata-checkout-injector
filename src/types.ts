@@ -45,7 +45,21 @@ interface AppStateMessage extends GenericMessage {
   payload: AppState;
 }
 
-type AppMessage = AppStateMessage | SaveAppStateMessage | GetAppStateMessage;
+interface CheckoutContextState {
+  hasCheckoutContext: boolean;
+  initialConfiguration?: string;
+  originTagName?: string;
+}
+
+interface CopyCheckoutConfigurationMessage extends GenericMessage {
+  name: "copy-checkout-configuration";
+}
+
+type AppMessage =
+  | AppStateMessage
+  | SaveAppStateMessage
+  | GetAppStateMessage
+  | CopyCheckoutConfigurationMessage;
 
 const ScriptReference = "?ref=ventrata-injector-extension";
 
@@ -62,4 +76,6 @@ export {
   type CheckoutScriptConfigOverrides,
   type AppState,
   type AppStateMessage,
+  type CheckoutContextState,
+  type CopyCheckoutConfigurationMessage,
 };

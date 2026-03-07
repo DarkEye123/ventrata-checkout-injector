@@ -4,6 +4,7 @@
   "description": "Try Ventrata checkout everywhere",
   "permissions": [
     "background",
+    "contextMenus",
     "declarativeNetRequest",
     "storage",
     "scripting",
@@ -11,6 +12,11 @@
     "tabs"
   ],
   "host_permissions": ["http://*/*", "https://*/*"],
+  "icons": {
+    "16": "assets/ventrata-shop-icon.png",
+    "24": "assets/ventrata-shop-icon.png",
+    "32": "assets/ventrata-shop-icon.png"
+  },
   "action": {
     "default_icon": {
       "16": "assets/ventrata-shop-icon.png",

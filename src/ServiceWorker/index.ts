@@ -5,6 +5,35 @@ import { createStateMessage, deleteTabAppState, saveAppState } from "./state";
 
 console.log("executing service worker script");
 
+const COPY_CONFIGURATION_MENU_ITEM_ID = "copy-configuration";
+let ensureContextMenuPromise: Promise<void> | null = null;
+
+function removeAllContextMenus() {
+  return new Promise<void>((resolve, reject) => {
+    chrome.contextMenus.removeAll(() => {
+      if (chrome.runtime.lastError) {
+        reject(new Error(chrome.runtime.lastError.message));
+        return;
+      }
+
+      resolve();
+    });
+  });
+}
+
+function createContextMenuItem(createProperties: chrome.contextMenus.CreateProperties) {
+  return new Promise<void>((resolve, reject) => {
+    chrome.contextMenus.create(createProperties, () => {
+      if (chrome.runtime.lastError) {
+        reject(new Error(chrome.runtime.lastError.message));
+        return;
+      }
+
+      resolve();
+    });
+  });
+}
+
 function getActionTabOptions(tabId: number | undefined) {
   return typeof tabId === "number" ? { tabId } : {};
 }
@@ -50,6 +79,34 @@ async function syncActionIcon(tabId: number | undefined) {
       error,
     });
   }
+}
+
+async function createContextMenu() {
+  await removeAllContextMenus();
+  await createContextMenuItem({
+    id: COPY_CONFIGURATION_MENU_ITEM_ID,
+    title: "Ventrata Checkout Injector: Copy configuration",
+    contexts: ["all"],
+  });
+}
+
+async function ensureContextMenu() {
+  if (ensureContextMenuPromise) {
+    await ensureContextMenuPromise;
+    return;
+  }
+
+  ensureContextMenuPromise = (async () => {
+    try {
+      await createContextMenu();
+    } catch (error) {
+      console.warn("Service Worker::failed to create context menu", error);
+    } finally {
+      ensureContextMenuPromise = null;
+    }
+  })();
+
+  await ensureContextMenuPromise;
 }
 
 function isInjectableTabUrl(url?: string) {
@@ -111,6 +168,31 @@ function createPopupMessageHandler(port: chrome.runtime.Port) {
   };
 }
 
+chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+  if (info.menuItemId !== COPY_CONFIGURATION_MENU_ITEM_ID || typeof tab?.id !== "number") {
+    return;
+  }
+
+  try {
+    await chrome.tabs.sendMessage(tab.id, {
+      name: "copy-checkout-configuration",
+    } satisfies AppMessage);
+  } catch (error) {
+    console.warn("Service Worker::failed to send copy configuration message", {
+      tabId: tab.id,
+      error,
+    });
+  }
+});
+
+chrome.runtime.onInstalled.addListener(() => {
+  void ensureContextMenu();
+});
+
+chrome.runtime.onStartup.addListener(() => {
+  void ensureContextMenu();
+});
+
 // TODO rethink if it is really needed to update popup and content script by their ports, it seems that it is not needed at the end
 chrome.runtime.onConnect.addListener(async (port) => {
   console.log("Service Worker::onConnect", port);
@@ -158,6 +240,7 @@ async function init() {
     if (!changeInfo.status && !changeInfo.url) {
       return;
     }
+
     await injectTabScripts(tabId);
     await syncActionIcon(tabId);
   });
