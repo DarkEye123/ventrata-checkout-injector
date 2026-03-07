@@ -17,3 +17,7 @@ Chrome's extension context-menu API cannot reliably show a menu item only for th
 - the copied value is the exact `data-initial-configuration` attribute value from the nearest enclosing checkout component
 
 This behavior is intentional and should not be reworked back into per-element native menu visibility unless Chrome exposes a supported API for that exact use case.
+
+## Troubleshooting
+
+If code changes do not appear in Chrome after reload, first verify that the unpacked extension is loaded from the correct worktree `dist` directory. A common failure mode in this repository is reloading an older `dist` from another branch or from `master`, which makes the runtime manifest and service worker differ from the files being edited.
