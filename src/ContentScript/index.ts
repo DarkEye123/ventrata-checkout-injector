@@ -2,6 +2,9 @@ import { AppName, type AppMessage, type CheckoutContextState } from "../types";
 import { injectScript } from "./helpers";
 
 const VENTRATA_CHECKOUT_ELEMENT_TAG = "ventrata-checkout-element";
+const IS_MAC_PLATFORM = navigator.platform.toLowerCase().includes("mac");
+const LEFT_MOUSE_BUTTON = 0;
+const RIGHT_MOUSE_BUTTON = 2;
 
 let latestCheckoutContextState: CheckoutContextState = {
   hasCheckoutContext: false,
@@ -48,6 +51,14 @@ function syncCheckoutContextState(state: CheckoutContextState) {
 
 function captureCheckoutContext(event: MouseEvent) {
   syncCheckoutContextState(resolveCheckoutContextState(event));
+}
+
+function isModifierShortcutCopyEvent(event: MouseEvent) {
+  if (event.button !== LEFT_MOUSE_BUTTON) {
+    return false;
+  }
+
+  return IS_MAC_PLATFORM ? event.metaKey : event.ctrlKey;
 }
 
 async function waitForDocumentFocus(timeoutMs = 500) {
@@ -104,7 +115,7 @@ async function writeToClipboard(value: string) {
 async function copyLatestCheckoutConfiguration() {
   if (!latestCheckoutContextState.hasCheckoutContext) {
     console.info(
-      "Ventrata Injector::copy configuration skipped because the last right click was outside ventrata-checkout-element",
+      "Ventrata Injector::copy configuration skipped because the current interaction target was outside ventrata-checkout-element",
     );
     return;
   }
@@ -166,11 +177,30 @@ function init() {
       messageHandler(message);
     });
 
-    window.addEventListener("mousedown", (event) => {
-      if (event.button === 2) {
+    window.addEventListener(
+      "mousedown",
+      (event) => {
+        if (event.button === RIGHT_MOUSE_BUTTON) {
+          captureCheckoutContext(event);
+          return;
+        }
+
+        if (!isModifierShortcutCopyEvent(event)) {
+          return;
+        }
+
         captureCheckoutContext(event);
-      }
-    });
+
+        if (!latestCheckoutContextState.hasCheckoutContext) {
+          return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        void copyLatestCheckoutConfiguration();
+      },
+      true,
+    );
 
     window.addEventListener("contextmenu", (event) => {
       captureCheckoutContext(event);

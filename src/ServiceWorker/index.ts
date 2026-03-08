@@ -5,6 +5,7 @@ import { createStateMessage, deleteTabAppState, saveAppState } from "./state";
 
 console.log("executing service worker script");
 
+const COPY_CONFIGURATION_MENU_PARENT_ID = "ventrata-checkout-injector";
 const COPY_CONFIGURATION_MENU_ITEM_ID = "copy-configuration";
 let ensureContextMenuPromise: Promise<void> | null = null;
 
@@ -84,9 +85,15 @@ async function syncActionIcon(tabId: number | undefined) {
 async function createContextMenu() {
   await removeAllContextMenus();
   await createContextMenuItem({
-    id: COPY_CONFIGURATION_MENU_ITEM_ID,
-    title: "Ventrata Checkout Injector: Copy configuration",
+    id: COPY_CONFIGURATION_MENU_PARENT_ID,
+    title: "Ventrata Checkout Injector",
     contexts: ["all"],
+  });
+  await createContextMenuItem({
+    id: COPY_CONFIGURATION_MENU_ITEM_ID,
+    title: "Copy configuration",
+    contexts: ["all"],
+    parentId: COPY_CONFIGURATION_MENU_PARENT_ID,
   });
 }
 
