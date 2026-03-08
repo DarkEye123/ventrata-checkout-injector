@@ -137,6 +137,18 @@ async function injectTabScripts(tabId: number) {
   }
 }
 
+async function injectOpenTabs() {
+  const tabs = await chrome.tabs.query({});
+
+  await Promise.all(
+    tabs.map(async (tab) => {
+      if (typeof tab.id === "number") {
+        await injectTabScripts(tab.id);
+      }
+    }),
+  );
+}
+
 function createPopupMessageHandler(port: chrome.runtime.Port) {
   return async (message: AppMessage) => {
     console.log("received popup message", message);
@@ -174,6 +186,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   }
 
   try {
+    await injectTabScripts(tab.id);
     await chrome.tabs.sendMessage(tab.id, {
       name: "copy-checkout-configuration",
     } satisfies AppMessage);
@@ -187,10 +200,12 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 
 chrome.runtime.onInstalled.addListener(() => {
   void ensureContextMenu();
+  void injectOpenTabs();
 });
 
 chrome.runtime.onStartup.addListener(() => {
   void ensureContextMenu();
+  void injectOpenTabs();
 });
 
 // TODO rethink if it is really needed to update popup and content script by their ports, it seems that it is not needed at the end

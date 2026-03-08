@@ -18,6 +18,18 @@ function getCheckoutHostElement(path: EventTarget[]) {
   );
 }
 
+function getInitialConfigurationAttributeValue(checkoutHostElement: HTMLElement | undefined) {
+  if (!checkoutHostElement) {
+    return undefined;
+  }
+
+  return (
+    checkoutHostElement.getAttribute("data-initial-configuration") ??
+    checkoutHostElement.getAttribute("initial-configuration") ??
+    checkoutHostElement.dataset.initialConfiguration
+  );
+}
+
 function resolveCheckoutContextState(event: MouseEvent): CheckoutContextState {
   const composedPath = event.composedPath();
   const originElement = getOriginElement(composedPath);
@@ -25,7 +37,7 @@ function resolveCheckoutContextState(event: MouseEvent): CheckoutContextState {
 
   return {
     hasCheckoutContext: Boolean(checkoutHostElement),
-    initialConfiguration: checkoutHostElement?.dataset.initialConfiguration,
+    initialConfiguration: getInitialConfigurationAttributeValue(checkoutHostElement),
     originTagName: originElement?.tagName.toLowerCase(),
   };
 }
@@ -34,25 +46,59 @@ function syncCheckoutContextState(state: CheckoutContextState) {
   latestCheckoutContextState = state;
 }
 
+function captureCheckoutContext(event: MouseEvent) {
+  syncCheckoutContextState(resolveCheckoutContextState(event));
+}
+
+async function waitForDocumentFocus(timeoutMs = 500) {
+  if (document.hasFocus()) {
+    return true;
+  }
+
+  const startedAt = Date.now();
+
+  while (Date.now() - startedAt < timeoutMs) {
+    await new Promise((resolve) => window.setTimeout(resolve, 25));
+
+    if (document.hasFocus()) {
+      return true;
+    }
+  }
+
+  return document.hasFocus();
+}
+
+function writeToClipboardWithExecCommand(value: string) {
+  let copied = false;
+
+  const handleCopy = (event: ClipboardEvent) => {
+    event.preventDefault();
+    event.clipboardData?.setData("text/plain", value);
+    copied = true;
+  };
+
+  document.addEventListener("copy", handleCopy, { once: true });
+
+  try {
+    const commandSucceeded = document.execCommand("copy");
+    return copied && commandSucceeded;
+  } finally {
+    document.removeEventListener("copy", handleCopy);
+  }
+}
+
 async function writeToClipboard(value: string) {
+  const copiedWithExecCommand = writeToClipboardWithExecCommand(value);
+  if (copiedWithExecCommand) {
+    return;
+  }
+
   if (navigator.clipboard?.writeText) {
     await navigator.clipboard.writeText(value);
     return;
   }
 
-  const textArea = document.createElement("textarea");
-  textArea.value = value;
-  textArea.setAttribute("readonly", "true");
-  textArea.style.position = "fixed";
-  textArea.style.left = "-9999px";
-  document.body.appendChild(textArea);
-  textArea.select();
-
-  try {
-    document.execCommand("copy");
-  } finally {
-    textArea.remove();
-  }
+  throw new Error("Clipboard write failed");
 }
 
 async function copyLatestCheckoutConfiguration() {
@@ -64,11 +110,24 @@ async function copyLatestCheckoutConfiguration() {
   }
 
   const originTagName = latestCheckoutContextState.originTagName ?? "unknown";
-  const valueToCopy = String(latestCheckoutContextState.initialConfiguration);
+  const valueToCopy = latestCheckoutContextState.initialConfiguration;
 
   console.log("Ventrata Injector::copy configuration origin", originTagName);
-  await writeToClipboard(valueToCopy);
-  console.info("Ventrata Injector::configuration copied successfully");
+
+  if (typeof valueToCopy === "undefined") {
+    console.warn(
+      "Ventrata Injector::copy configuration failed because the checkout host does not expose an initial configuration attribute",
+    );
+    return;
+  }
+
+  try {
+    await waitForDocumentFocus();
+    await writeToClipboard(valueToCopy);
+    console.info("Ventrata Injector::configuration copied successfully");
+  } catch (error) {
+    console.warn("Ventrata Injector::configuration copy failed", error);
+  }
 }
 
 function messageHandler(message: AppMessage) {
@@ -107,8 +166,14 @@ function init() {
       messageHandler(message);
     });
 
+    window.addEventListener("mousedown", (event) => {
+      if (event.button === 2) {
+        captureCheckoutContext(event);
+      }
+    });
+
     window.addEventListener("contextmenu", (event) => {
-      syncCheckoutContextState(resolveCheckoutContextState(event));
+      captureCheckoutContext(event);
     });
 
     port.onMessage.addListener(messageHandler);
