@@ -122,19 +122,13 @@ async function copyLatestCheckoutConfiguration() {
 
   const originTagName = latestCheckoutContextState.originTagName ?? "unknown";
   const valueToCopy = latestCheckoutContextState.initialConfiguration;
+  const clipboardValue = String(valueToCopy);
 
   console.log("Ventrata Injector::copy configuration origin", originTagName);
 
-  if (typeof valueToCopy === "undefined") {
-    console.warn(
-      "Ventrata Injector::copy configuration failed because the checkout host does not expose an initial configuration attribute",
-    );
-    return;
-  }
-
   try {
     await waitForDocumentFocus();
-    await writeToClipboard(valueToCopy);
+    await writeToClipboard(clipboardValue);
     console.info("Ventrata Injector::configuration copied successfully");
   } catch (error) {
     console.warn("Ventrata Injector::configuration copy failed", error);
