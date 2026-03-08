@@ -93,8 +93,10 @@
         compact
         uppercase
         ripple
-        on:click={() => currentViewName.set(navigationItem)}>{navigationItem}</Button
+        on:click={() => currentViewName.set(navigationItem)}
       >
+        {navigationItem}
+      </Button>
     {/each}
   </nav>
   <svelte:component

@@ -1,0 +1,17 @@
+{
+  "trailingComma": "all",
+  "plugins": ["prettier-plugin-svelte", "prettier-plugin-tailwindcss"],
+  "tabWidth": 2,
+  "printWidth": 100,
+  "overrides": [
+    {
+      "files": "*.svelte",
+      "options": {
+        "parser": "svelte",
+        "svelteStrictMode": false,
+        "htmlWhitespaceSensitivity": "ignore"
+      }
+    }
+  ],
+  "tailwindFunctions": ["clsx"]
+}

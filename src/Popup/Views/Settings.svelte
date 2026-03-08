@@ -52,7 +52,9 @@
       class="justify-self-center"
       loading={isFetchingTokenData}
       disabled={!requestAccessButtonEnabled}
-      on:click={handleAccessTokenUpdate}>Request Access</Button
+      on:click={handleAccessTokenUpdate}
     >
+      Request Access
+    </Button>
   </section>
 </Panel>
