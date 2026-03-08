@@ -77,7 +77,7 @@
 
       <div class="w-full justify-center">
         <Switch
-          class="w-full justify-self-center [&_input]:h-2"
+          class="[&_input]:h-2"
           size="md"
           onLabel="ON"
           offLabel="OFF"
