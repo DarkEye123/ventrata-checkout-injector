@@ -22,7 +22,13 @@ Use either action on an element inside a checkout widget:
 
 The extension copies the exact `data-initial-configuration` value from the nearest enclosing `ventrata-checkout-element`.
 
-Note: the browser menu entry may still be visible outside the checkout widget, but copying only happens when the clicked element belongs to a `ventrata-checkout-element`.
+The context-menu entry is intended for pages that expose Ventrata checkout markers, such as:
+
+- the checkout script URL containing `ventrata-checkout.min.js`
+- the `ventrata-checkout-element` web component
+- integration trigger markers like `ventrata-embedded-widget`, `ventrata-checkout`, or `ventrata-manage-my-booking`
+
+Copying still only happens when the clicked element belongs to a `ventrata-checkout-element`.
 
 ## Troubleshooting
 
