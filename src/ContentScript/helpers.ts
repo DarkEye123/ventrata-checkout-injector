@@ -25,6 +25,16 @@ function isOriginalCheckoutScript(script: HTMLScriptElement) {
   return isCheckoutProductionScript && !hasInjectorRef;
 }
 
+function isVentrataCheckoutScript(script: HTMLScriptElement) {
+  const scriptUrl = getScriptUrl(script);
+  return scriptUrl?.pathname.endsWith(CHECKOUT_SCRIPT_PATH) ?? false;
+}
+
+function hasVentrataCheckoutScript() {
+  const scripts = Array.from(document.querySelectorAll("script[src]")) as HTMLScriptElement[];
+  return scripts.some(isVentrataCheckoutScript);
+}
+
 function resolveCheckoutScriptConfigOverrides(
   checkoutScriptConfigOverrides?: CheckoutScriptConfigOverrides,
 ): CheckoutScriptConfigOverrides {
@@ -106,4 +116,4 @@ function injectScript(
   }
 }
 
-export { injectScript };
+export { injectScript, hasVentrataCheckoutScript };

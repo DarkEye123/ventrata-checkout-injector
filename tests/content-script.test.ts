@@ -3,9 +3,11 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const injectScriptMock = vi.fn();
+const hasVentrataCheckoutScriptMock = vi.fn(() => false);
 
 vi.mock("../src/ContentScript/helpers", () => ({
   injectScript: injectScriptMock,
+  hasVentrataCheckoutScript: hasVentrataCheckoutScriptMock,
 }));
 
 const flushPromises = async () => {
@@ -36,6 +38,7 @@ function dispatchMouseEvent(
 describe("content script copy configuration delivery", () => {
   let runtimeMessageListeners: Array<(message: unknown) => void>;
   let portMessageListeners: Array<(message: unknown) => void>;
+  let runtimeSendMessageMock: ReturnType<typeof vi.fn>;
   let writeTextMock: ReturnType<typeof vi.fn>;
   let execCommandMock: ReturnType<typeof vi.fn>;
   let infoSpy: ReturnType<typeof vi.spyOn>;
@@ -81,6 +84,7 @@ describe("content script copy configuration delivery", () => {
     infoSpy = vi.spyOn(console, "info").mockImplementation(() => undefined);
     warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     vi.spyOn(console, "log").mockImplementation(() => undefined);
+    runtimeSendMessageMock = vi.fn();
 
     Object.assign(window, {
       VentrataInjector: undefined,
@@ -104,6 +108,7 @@ describe("content script copy configuration delivery", () => {
               runtimeMessageListeners.push(listener);
             }),
           },
+          sendMessage: runtimeSendMessageMock,
         },
       },
     });
@@ -116,6 +121,7 @@ describe("content script copy configuration delivery", () => {
     vi.clearAllMocks();
     document.body.innerHTML = "";
     writeTextMock = vi.fn(async () => undefined);
+    hasVentrataCheckoutScriptMock.mockReturnValue(false);
 
     Object.defineProperty(navigator, "clipboard", {
       value: {
@@ -206,12 +212,12 @@ describe("content script copy configuration delivery", () => {
     });
     await flushPromises();
 
-    expect(event.defaultPrevented).toBe(true);
+    expect(event.defaultPrevented).toBe(false);
     expect(execCommandMock).toHaveBeenCalledWith("copy");
     expect(infoSpy).toHaveBeenCalledWith("Ventrata Injector::configuration copied successfully");
   });
 
-  it("warns when the checkout host has no initial configuration attribute", async () => {
+  it("copies undefined when the checkout host has no initial configuration attribute", async () => {
     const checkoutHost = document.createElement("ventrata-checkout-element");
     const originButton = document.createElement("button");
     checkoutHost.append(originButton);
@@ -227,9 +233,7 @@ describe("content script copy configuration delivery", () => {
     });
     await flushPromises();
 
-    expect(execCommandMock).not.toHaveBeenCalled();
-    expect(warnSpy).toHaveBeenCalledWith(
-      "Ventrata Injector::copy configuration failed because the checkout host does not expose an initial configuration attribute",
-    );
+    expect(execCommandMock).toHaveBeenCalledWith("copy");
+    expect(infoSpy).toHaveBeenCalledWith("Ventrata Injector::configuration copied successfully");
   });
 });

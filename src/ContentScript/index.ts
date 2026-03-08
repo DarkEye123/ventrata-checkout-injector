@@ -1,5 +1,5 @@
 import { AppName, type AppMessage, type CheckoutContextState } from "../types";
-import { injectScript } from "./helpers";
+import { hasVentrataCheckoutScript, injectScript } from "./helpers";
 
 const VENTRATA_CHECKOUT_ELEMENT_TAG = "ventrata-checkout-element";
 const IS_MAC_PLATFORM = navigator.platform.toLowerCase().includes("mac");
@@ -154,6 +154,15 @@ function messageHandler(message: AppMessage) {
   }
 }
 
+function syncCheckoutScriptPresence() {
+  chrome.runtime.sendMessage({
+    name: "checkout-script-presence",
+    payload: {
+      hasCheckoutScript: hasVentrataCheckoutScript(),
+    },
+  } satisfies AppMessage);
+}
+
 function init() {
   if (!window.VentrataInjector?.contentScriptInjected) {
     console.log("Ventrata Injector::content script init");
@@ -166,6 +175,7 @@ function init() {
     });
 
     console.log("Ventrata Injector::content script connected", port);
+    syncCheckoutScriptPresence();
 
     chrome.runtime.onMessage.addListener((message: AppMessage) => {
       messageHandler(message);

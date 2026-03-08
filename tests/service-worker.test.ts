@@ -72,6 +72,9 @@ describe("service worker copy configuration delivery", () => {
   let onStartup: ChromeEventMock<[]>;
   let onClicked: ChromeEventMock<[chrome.contextMenus.OnClickData, chrome.tabs.Tab?]>;
   let onConnect: ChromeEventMock<[chrome.runtime.Port]>;
+  let onRuntimeMessage: ChromeEventMock<
+    [unknown, chrome.runtime.MessageSender, ((response?: unknown) => void)?]
+  >;
   let onActivated: ChromeEventMock<[chrome.tabs.TabActiveInfo]>;
   let onUpdated: ChromeEventMock<
     [number, chrome.tabs.TabChangeInfo, chrome.tabs.Tab]
@@ -83,6 +86,7 @@ describe("service worker copy configuration delivery", () => {
   let executeScriptMock: ReturnType<typeof vi.fn>;
   let sendMessageMock: ReturnType<typeof vi.fn>;
   let createMenuMock: ReturnType<typeof vi.fn>;
+  let updateMenuMock: ReturnType<typeof vi.fn>;
   let removeAllMenusMock: ReturnType<typeof vi.fn>;
   let setIconMock: ReturnType<typeof vi.fn>;
   let reloadTabMock: ReturnType<typeof vi.fn>;
@@ -95,6 +99,7 @@ describe("service worker copy configuration delivery", () => {
     onStartup = createChromeEventMock();
     onClicked = createChromeEventMock();
     onConnect = createChromeEventMock();
+    onRuntimeMessage = createChromeEventMock();
     onActivated = createChromeEventMock();
     onUpdated = createChromeEventMock();
     onRemoved = createChromeEventMock();
@@ -122,11 +127,30 @@ describe("service worker copy configuration delivery", () => {
       return { id: tabId, url: "https://customer.example/checkout" };
     });
 
-    executeScriptMock = vi.fn(async () => undefined);
+    executeScriptMock = vi.fn(async (options: chrome.scripting.ScriptInjection<unknown[], unknown>) => {
+      if ("func" in options && options.target.tabId === 11) {
+        return [{ result: true }];
+      }
+
+      if ("func" in options) {
+        return [{ result: false }];
+      }
+
+      return undefined;
+    });
     sendMessageMock = vi.fn(async () => undefined);
     createMenuMock = vi.fn((properties: chrome.contextMenus.CreateProperties, callback?: () => void) => {
       callback?.();
     });
+    updateMenuMock = vi.fn(
+      (
+        _menuItemId: string,
+        _updateProperties: chrome.contextMenus.UpdateProperties,
+        callback?: () => void,
+      ) => {
+        callback?.();
+      },
+    );
     removeAllMenusMock = vi.fn((callback?: () => void) => {
       callback?.();
     });
@@ -140,9 +164,11 @@ describe("service worker copy configuration delivery", () => {
           onInstalled,
           onStartup,
           onConnect,
+          onMessage: onRuntimeMessage,
         },
         contextMenus: {
           create: createMenuMock,
+          update: updateMenuMock,
           removeAll: removeAllMenusMock,
           onClicked,
         },
@@ -180,6 +206,7 @@ describe("service worker copy configuration delivery", () => {
         id: "ventrata-checkout-injector",
         title: "Ventrata Checkout Injector",
         contexts: ["all"],
+        visible: false,
       },
       expect.any(Function),
     );
@@ -190,6 +217,38 @@ describe("service worker copy configuration delivery", () => {
         title: "Copy configuration",
         contexts: ["all"],
         parentId: "ventrata-checkout-injector",
+        visible: false,
+      },
+      expect.any(Function),
+    );
+  });
+
+  it("shows the context menu only after the active tab reports checkout script presence", async () => {
+    await onRuntimeMessage.dispatch(
+      {
+        name: "checkout-script-presence",
+        payload: {
+          hasCheckoutScript: true,
+        },
+      },
+      {
+        tab: { id: 99, url: "https://customer.example/checkout" },
+      },
+      undefined,
+    );
+    await flushPromises();
+
+    expect(updateMenuMock).toHaveBeenCalledWith(
+      "ventrata-checkout-injector",
+      {
+        visible: true,
+      },
+      expect.any(Function),
+    );
+    expect(updateMenuMock).toHaveBeenCalledWith(
+      "copy-configuration",
+      {
+        visible: true,
       },
       expect.any(Function),
     );
@@ -200,31 +259,66 @@ describe("service worker copy configuration delivery", () => {
     await flushPromises();
 
     expect(tabsQueryMock).toHaveBeenCalledWith({});
-    expect(executeScriptMock).toHaveBeenCalledTimes(2);
-    expect(executeScriptMock).toHaveBeenNthCalledWith(1, {
+    const injectionCalls = executeScriptMock.mock.calls
+      .map(([call]) => call)
+      .filter((call) => "files" in call);
+
+    expect(injectionCalls).toEqual([
+      {
+        target: { tabId: 11 },
+        files: ["./pageHook.js"],
+        world: "MAIN",
+      },
+      {
+        target: { tabId: 11 },
+        files: ["./contentScript.js"],
+      },
+    ]);
+  });
+
+  it("detects checkout script presence before showing the menu for the active tab", async () => {
+    await onActivated.dispatch({ tabId: 11, windowId: 1 });
+    await flushPromises();
+
+    expect(executeScriptMock).toHaveBeenCalledWith({
       target: { tabId: 11 },
-      files: ["./pageHook.js"],
-      world: "MAIN",
+      func: expect.any(Function),
     });
-    expect(executeScriptMock).toHaveBeenNthCalledWith(2, {
-      target: { tabId: 11 },
-      files: ["./contentScript.js"],
-    });
+    expect(updateMenuMock).toHaveBeenCalledWith(
+      "ventrata-checkout-injector",
+      {
+        visible: true,
+      },
+      expect.any(Function),
+    );
+    expect(updateMenuMock).toHaveBeenCalledWith(
+      "copy-configuration",
+      {
+        visible: true,
+      },
+      expect.any(Function),
+    );
   });
 
   it("sends the copy message after injecting the clicked tab", async () => {
     await onClicked.dispatch({ menuItemId: "copy-configuration" }, { id: 77 });
     await flushPromises();
 
-    expect(executeScriptMock).toHaveBeenNthCalledWith(1, {
-      target: { tabId: 77 },
-      files: ["./pageHook.js"],
-      world: "MAIN",
-    });
-    expect(executeScriptMock).toHaveBeenNthCalledWith(2, {
-      target: { tabId: 77 },
-      files: ["./contentScript.js"],
-    });
+    const injectionCalls = executeScriptMock.mock.calls
+      .map(([call]) => call)
+      .filter((call) => "files" in call);
+
+    expect(injectionCalls).toEqual([
+      {
+        target: { tabId: 77 },
+        files: ["./pageHook.js"],
+        world: "MAIN",
+      },
+      {
+        target: { tabId: 77 },
+        files: ["./contentScript.js"],
+      },
+    ]);
     expect(sendMessageMock).toHaveBeenCalledWith(77, {
       name: "copy-checkout-configuration",
     });
