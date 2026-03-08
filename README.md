@@ -14,15 +14,15 @@ It also supports a direct copy shortcut on the page:
 - Windows: `Ctrl + left click`
 - macOS: `Command + left click`
 
-Chrome's extension context-menu API cannot reliably show a menu item only for the exact DOM element that was right-clicked inside `ventrata-checkout-element`, especially for shadow-DOM content. Because of that platform limitation, the extension uses a fallback model:
+Use either action on an element inside a checkout widget:
 
-- the extension menu is shown on normal page right-clicks
-- the content script tracks the last right-click target with `event.composedPath()`
-- `Copy configuration` only performs a copy when the last right-click happened inside a `ventrata-checkout-element`
-- the modifier-click shortcut only performs a copy when the clicked element is inside a `ventrata-checkout-element`
-- the copied value is the exact `data-initial-configuration` attribute value from the nearest enclosing checkout component
+- right click, then select `Ventrata Checkout Injector` -> `Copy configuration`
+- Windows: `Ctrl + left click`
+- macOS: `Command + left click`
 
-This behavior is intentional and should not be reworked back into per-element native menu visibility unless Chrome exposes a supported API for that exact use case.
+The extension copies the exact `data-initial-configuration` value from the nearest enclosing `ventrata-checkout-element`.
+
+Note: the browser menu entry may still be visible outside the checkout widget, but copying only happens when the clicked element belongs to a `ventrata-checkout-element`.
 
 ## Troubleshooting
 
