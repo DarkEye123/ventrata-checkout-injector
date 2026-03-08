@@ -1,4 +1,5 @@
 import { isPublicEnvironment, isTunneledEnvironment } from "../commonUtils";
+import { hasVentrataPageMarkers } from "../checkoutMarkers";
 import { ScriptReference, type CheckoutScriptConfigOverrides } from "../types";
 
 const CHECKOUT_SCRIPT_PATH = "/v3/production/ventrata-checkout.min.js";
@@ -25,14 +26,8 @@ function isOriginalCheckoutScript(script: HTMLScriptElement) {
   return isCheckoutProductionScript && !hasInjectorRef;
 }
 
-function isVentrataCheckoutScript(script: HTMLScriptElement) {
-  const scriptUrl = getScriptUrl(script);
-  return scriptUrl?.pathname.endsWith(CHECKOUT_SCRIPT_PATH) ?? false;
-}
-
 function hasVentrataCheckoutScript() {
-  const scripts = Array.from(document.querySelectorAll("script[src]")) as HTMLScriptElement[];
-  return scripts.some(isVentrataCheckoutScript);
+  return hasVentrataPageMarkers(document);
 }
 
 function resolveCheckoutScriptConfigOverrides(

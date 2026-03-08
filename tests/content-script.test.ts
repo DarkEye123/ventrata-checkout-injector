@@ -3,12 +3,17 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const injectScriptMock = vi.fn();
-const hasVentrataCheckoutScriptMock = vi.fn(() => false);
 
-vi.mock("../src/ContentScript/helpers", () => ({
-  injectScript: injectScriptMock,
-  hasVentrataCheckoutScript: hasVentrataCheckoutScriptMock,
-}));
+vi.mock("../src/ContentScript/helpers", async () => {
+  const actual = await vi.importActual<typeof import("../src/ContentScript/helpers")>(
+    "../src/ContentScript/helpers",
+  );
+
+  return {
+    ...actual,
+    injectScript: injectScriptMock,
+  };
+});
 
 const flushPromises = async () => {
   await Promise.resolve();
@@ -45,9 +50,6 @@ describe("content script copy configuration delivery", () => {
   let warnSpy: ReturnType<typeof vi.spyOn>;
 
   beforeAll(async () => {
-    runtimeMessageListeners = [];
-    portMessageListeners = [];
-
     Object.defineProperty(navigator, "platform", {
       value: "Win32",
       configurable: true,
@@ -78,6 +80,42 @@ describe("content script copy configuration delivery", () => {
       value: {
         writeText: writeTextMock,
       },
+      configurable: true,
+    });
+
+    infoSpy = vi.spyOn(console, "info").mockImplementation(() => undefined);
+    warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+  });
+
+  beforeEach(async () => {
+    vi.resetModules();
+    vi.clearAllMocks();
+    runtimeMessageListeners = [];
+    portMessageListeners = [];
+    document.body.innerHTML = "";
+    writeTextMock = vi.fn(async () => undefined);
+
+    Object.defineProperty(navigator, "clipboard", {
+      value: {
+        writeText: writeTextMock,
+      },
+      configurable: true,
+    });
+
+    execCommandMock = vi.fn(() => {
+      const copyEvent = new Event("copy", { bubbles: true, cancelable: true }) as ClipboardEvent;
+      Object.defineProperty(copyEvent, "clipboardData", {
+        value: {
+          setData: vi.fn(),
+        },
+      });
+      document.dispatchEvent(copyEvent);
+      return true;
+    });
+
+    Object.defineProperty(document, "execCommand", {
+      value: execCommandMock,
       configurable: true,
     });
 
@@ -115,40 +153,6 @@ describe("content script copy configuration delivery", () => {
 
     await import("../src/ContentScript/index");
     await flushPromises();
-  });
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    document.body.innerHTML = "";
-    writeTextMock = vi.fn(async () => undefined);
-    hasVentrataCheckoutScriptMock.mockReturnValue(false);
-
-    Object.defineProperty(navigator, "clipboard", {
-      value: {
-        writeText: writeTextMock,
-      },
-      configurable: true,
-    });
-
-    execCommandMock = vi.fn(() => {
-      const copyEvent = new Event("copy", { bubbles: true, cancelable: true }) as ClipboardEvent;
-      Object.defineProperty(copyEvent, "clipboardData", {
-        value: {
-          setData: vi.fn(),
-        },
-      });
-      document.dispatchEvent(copyEvent);
-      return true;
-    });
-
-    Object.defineProperty(document, "execCommand", {
-      value: execCommandMock,
-      configurable: true,
-    });
-
-    infoSpy = vi.spyOn(console, "info").mockImplementation(() => undefined);
-    warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
 
     dispatchMouseEvent("mousedown", {
       button: 2,
@@ -215,6 +219,37 @@ describe("content script copy configuration delivery", () => {
     expect(event.defaultPrevented).toBe(false);
     expect(execCommandMock).toHaveBeenCalledWith("copy");
     expect(infoSpy).toHaveBeenCalledWith("Ventrata Injector::configuration copied successfully");
+  });
+
+  it("reports checkout script presence when a marker is added after init", async () => {
+    const markerScript = document.createElement("script");
+    markerScript.src = "https://cdn.checkout.ventrata.com/v3/pr/3118/ventrata-checkout.min.js";
+    document.body.append(markerScript);
+    await flushPromises();
+
+    expect(runtimeSendMessageMock).toHaveBeenCalledWith({
+      name: "checkout-script-presence",
+      payload: {
+        hasCheckoutScript: true,
+      },
+    });
+  });
+
+  it("reports checkout script presence when a script src becomes a checkout marker after insertion", async () => {
+    const markerScript = document.createElement("script");
+    document.body.append(markerScript);
+
+    runtimeSendMessageMock.mockClear();
+
+    markerScript.src = "https://cdn.checkout.ventrata.com/v3/pr/3118/ventrata-checkout.min.js";
+    await flushPromises();
+
+    expect(runtimeSendMessageMock).toHaveBeenCalledWith({
+      name: "checkout-script-presence",
+      payload: {
+        hasCheckoutScript: true,
+      },
+    });
   });
 
   it("copies undefined when the checkout host has no initial configuration attribute", async () => {

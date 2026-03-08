@@ -1,4 +1,5 @@
 import { AppName, type AppMessage } from "../types";
+import { VENTRATA_PAGE_MARKER_SELECTORS } from "../checkoutMarkers";
 import { clearTabRules, updateRules } from "./helpers";
 import { runMigrations } from "./migrations";
 import { createStateMessage, deleteTabAppState, saveAppState } from "./state";
@@ -145,20 +146,9 @@ async function detectCheckoutScriptPresence(tabId: number) {
 
     const [result] = await chrome.scripting.executeScript({
       target: { tabId },
-      func: () => {
-        return Array.from(document.querySelectorAll("script[src]")).some((script) => {
-          if (!(script instanceof HTMLScriptElement)) {
-            return false;
-          }
-
-          try {
-            return new URL(script.src, window.location.href).pathname.endsWith(
-              "/v3/production/ventrata-checkout.min.js",
-            );
-          } catch {
-            return false;
-          }
-        });
+      args: [VENTRATA_PAGE_MARKER_SELECTORS],
+      func: (selectors) => {
+        return selectors.some((selector) => document.querySelector(selector));
       },
     });
 

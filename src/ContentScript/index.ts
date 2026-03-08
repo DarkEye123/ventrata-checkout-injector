@@ -1,7 +1,11 @@
 import { AppName, type AppMessage, type CheckoutContextState } from "../types";
+import {
+  VENTRATA_CHECKOUT_ELEMENT_TAG,
+  VENTRATA_PAGE_MARKER_ATTRIBUTES,
+  hasVentrataPageMarkers,
+} from "../checkoutMarkers";
 import { hasVentrataCheckoutScript, injectScript } from "./helpers";
 
-const VENTRATA_CHECKOUT_ELEMENT_TAG = "ventrata-checkout-element";
 const IS_MAC_PLATFORM = navigator.platform.toLowerCase().includes("mac");
 const LEFT_MOUSE_BUTTON = 0;
 const RIGHT_MOUSE_BUTTON = 2;
@@ -163,6 +167,28 @@ function syncCheckoutScriptPresence() {
   } satisfies AppMessage);
 }
 
+function observeCheckoutScriptPresence() {
+  if (hasVentrataPageMarkers(document)) {
+    return;
+  }
+
+  const observer = new MutationObserver(() => {
+    if (!hasVentrataPageMarkers(document)) {
+      return;
+    }
+
+    syncCheckoutScriptPresence();
+    observer.disconnect();
+  });
+
+  observer.observe(document.documentElement, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ["src", ...VENTRATA_PAGE_MARKER_ATTRIBUTES],
+  });
+}
+
 function init() {
   if (!window.VentrataInjector?.contentScriptInjected) {
     console.log("Ventrata Injector::content script init");
@@ -176,6 +202,7 @@ function init() {
 
     console.log("Ventrata Injector::content script connected", port);
     syncCheckoutScriptPresence();
+    observeCheckoutScriptPresence();
 
     chrome.runtime.onMessage.addListener((message: AppMessage) => {
       messageHandler(message);

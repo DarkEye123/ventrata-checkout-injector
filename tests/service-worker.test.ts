@@ -225,7 +225,7 @@ describe("service worker copy configuration delivery", () => {
     );
   });
 
-  it("shows the context menu only after the active tab reports checkout script presence", async () => {
+  it("shows the context menu only after the active tab reports checkout markers", async () => {
     await onRuntimeMessage.dispatch(
       {
         name: "checkout-script-presence",
@@ -278,12 +278,13 @@ describe("service worker copy configuration delivery", () => {
     ]);
   });
 
-  it("detects checkout script presence before showing the menu for the active tab", async () => {
+  it("detects Ventrata page markers before showing the menu for the active tab", async () => {
     await onActivated.dispatch({ tabId: 11, windowId: 1 });
     await flushPromises();
 
     expect(executeScriptMock).toHaveBeenCalledWith({
       target: { tabId: 11 },
+      args: [expect.any(Array)],
       func: expect.any(Function),
     });
     expect(updateMenuMock).toHaveBeenCalledWith(
