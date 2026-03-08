@@ -76,9 +76,7 @@ describe("service worker copy configuration delivery", () => {
     [unknown, chrome.runtime.MessageSender, ((response?: unknown) => void)?]
   >;
   let onActivated: ChromeEventMock<[chrome.tabs.TabActiveInfo]>;
-  let onUpdated: ChromeEventMock<
-    [number, chrome.tabs.TabChangeInfo, chrome.tabs.Tab]
-  >;
+  let onUpdated: ChromeEventMock<[number, chrome.tabs.TabChangeInfo, chrome.tabs.Tab]>;
   let onRemoved: ChromeEventMock<[number, chrome.tabs.TabRemoveInfo]>;
 
   let tabsQueryMock: ReturnType<typeof vi.fn>;
@@ -127,21 +125,25 @@ describe("service worker copy configuration delivery", () => {
       return { id: tabId, url: "https://customer.example/checkout" };
     });
 
-    executeScriptMock = vi.fn(async (options: chrome.scripting.ScriptInjection<unknown[], unknown>) => {
-      if ("func" in options && options.target.tabId === 11) {
-        return [{ result: true }];
-      }
+    executeScriptMock = vi.fn(
+      async (options: chrome.scripting.ScriptInjection<unknown[], unknown>) => {
+        if ("func" in options && options.target.tabId === 11) {
+          return [{ result: true }];
+        }
 
-      if ("func" in options) {
-        return [{ result: false }];
-      }
+        if ("func" in options) {
+          return [{ result: false }];
+        }
 
-      return undefined;
-    });
+        return undefined;
+      },
+    );
     sendMessageMock = vi.fn(async () => undefined);
-    createMenuMock = vi.fn((properties: chrome.contextMenus.CreateProperties, callback?: () => void) => {
-      callback?.();
-    });
+    createMenuMock = vi.fn(
+      (properties: chrome.contextMenus.CreateProperties, callback?: () => void) => {
+        callback?.();
+      },
+    );
     updateMenuMock = vi.fn(
       (
         _menuItemId: string,
