@@ -38,7 +38,7 @@
 <Panel showBackButton>
   <section class="grid gap-6 rounded-lg border border-gray-200 p-4" id="github-token">
     <TextInput
-      fullSize
+      class="w-full"
       label="Your GH Access Token"
       error={ghAccessTokenError}
       bind:value={newAccessToken}
