@@ -189,8 +189,6 @@ function init() {
           return;
         }
 
-        event.preventDefault();
-        event.stopPropagation();
         void copyLatestCheckoutConfiguration();
       },
       true,
