@@ -88,6 +88,7 @@ describe("service worker copy configuration delivery", () => {
   let removeAllMenusMock: ReturnType<typeof vi.fn>;
   let setIconMock: ReturnType<typeof vi.fn>;
   let reloadTabMock: ReturnType<typeof vi.fn>;
+  let warnSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(async () => {
     vi.resetModules();
@@ -158,6 +159,8 @@ describe("service worker copy configuration delivery", () => {
     });
     setIconMock = vi.fn(async () => undefined);
     reloadTabMock = vi.fn();
+    warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
 
     Object.assign(globalThis, {
       chrome: {
@@ -303,7 +306,7 @@ describe("service worker copy configuration delivery", () => {
     );
   });
 
-  it("sends the copy message after injecting the clicked tab", async () => {
+  it("sends the copy message for the clicked tab without reinjecting scripts", async () => {
     await onClicked.dispatch({ menuItemId: "copy-configuration" }, { id: 77 });
     await flushPromises();
 
@@ -311,20 +314,18 @@ describe("service worker copy configuration delivery", () => {
       .map(([call]) => call)
       .filter((call) => "files" in call);
 
-    expect(injectionCalls).toEqual([
-      {
-        target: { tabId: 77 },
-        files: ["./pageHook.js"],
-        world: "MAIN",
-      },
-      {
-        target: { tabId: 77 },
-        files: ["./contentScript.js"],
-      },
-    ]);
+    expect(injectionCalls).toEqual([]);
     expect(sendMessageMock).toHaveBeenCalledWith(77, {
       name: "copy-checkout-configuration",
     });
+  });
+
+  it("ignores copy configuration clicks when the clicked tab id is missing", async () => {
+    await onClicked.dispatch({ menuItemId: "copy-configuration" }, {});
+    await flushPromises();
+
+    expect(executeScriptMock).not.toHaveBeenCalled();
+    expect(sendMessageMock).not.toHaveBeenCalled();
   });
 
   it("ignores unrelated context menu clicks", async () => {
@@ -333,5 +334,24 @@ describe("service worker copy configuration delivery", () => {
 
     expect(executeScriptMock).not.toHaveBeenCalled();
     expect(sendMessageMock).not.toHaveBeenCalled();
+  });
+
+  it("logs and swallows copy configuration message delivery failures", async () => {
+    const sendError = new Error("No receiver");
+    sendMessageMock.mockRejectedValueOnce(sendError);
+
+    await onClicked.dispatch({ menuItemId: "copy-configuration" }, { id: 77 });
+    await flushPromises();
+
+    expect(sendMessageMock).toHaveBeenCalledWith(77, {
+      name: "copy-checkout-configuration",
+    });
+    expect(warnSpy).toHaveBeenCalledWith(
+      "Service Worker::failed to send copy configuration message",
+      {
+        tabId: 77,
+        error: sendError,
+      },
+    );
   });
 });
