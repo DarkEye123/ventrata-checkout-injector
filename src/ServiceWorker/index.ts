@@ -181,8 +181,13 @@ async function syncContextMenuVisibilityForTab(tabId: number | undefined) {
     return;
   }
 
-  const hasCheckoutScript =
-    tabCheckoutScriptPresence.get(tabId) === true || (await detectCheckoutScriptPresence(tabId));
+  const cachedCheckoutScriptPresence = tabCheckoutScriptPresence.get(tabId);
+  if (cachedCheckoutScriptPresence !== undefined) {
+    await setContextMenuVisibility(cachedCheckoutScriptPresence);
+    return;
+  }
+
+  const hasCheckoutScript = await detectCheckoutScriptPresence(tabId);
   tabCheckoutScriptPresence.set(tabId, hasCheckoutScript);
   await setContextMenuVisibility(hasCheckoutScript);
 }
