@@ -32,10 +32,11 @@ function getInitialConfigurationAttributeValue(checkoutHostElement: HTMLElement 
     return undefined;
   }
 
-  return (
+  const initialConfiguration =
     checkoutHostElement.dataset.initialConfiguration ??
-    checkoutHostElement.getAttribute("initial-configuration")
-  );
+    checkoutHostElement.getAttribute("initial-configuration");
+
+  return initialConfiguration ?? undefined;
 }
 
 function resolveCheckoutContextState(event: MouseEvent): CheckoutContextState {
