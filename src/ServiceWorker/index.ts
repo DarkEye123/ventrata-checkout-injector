@@ -265,7 +265,6 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   }
 
   try {
-    await injectTabScripts(tab.id);
     await chrome.tabs.sendMessage(tab.id, {
       name: "copy-checkout-configuration",
     } satisfies AppMessage);
