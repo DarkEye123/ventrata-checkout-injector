@@ -231,10 +231,6 @@ function init() {
       true,
     );
 
-    window.addEventListener("contextmenu", (event) => {
-      captureCheckoutContext(event);
-    });
-
     port.onMessage.addListener(messageHandler);
 
     port.onDisconnect.addListener(() => {
