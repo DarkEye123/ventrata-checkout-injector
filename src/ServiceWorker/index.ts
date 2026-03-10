@@ -361,6 +361,19 @@ async function init() {
 
     if (changeInfo.url) {
       tabCheckoutScriptPresence.delete(tabId);
+
+      const [activeTab] = await chrome.tabs.query({
+        active: true,
+        lastFocusedWindow: true,
+      });
+
+      if (activeTab?.id === tabId) {
+        await setContextMenuVisibility(false);
+      }
+    }
+
+    if (changeInfo.status !== "complete") {
+      return;
     }
 
     await injectTabScripts(tabId);
