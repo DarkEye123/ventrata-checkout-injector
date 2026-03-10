@@ -33,9 +33,8 @@ function getInitialConfigurationAttributeValue(checkoutHostElement: HTMLElement 
   }
 
   return (
-    checkoutHostElement.getAttribute("data-initial-configuration") ??
-    checkoutHostElement.getAttribute("initial-configuration") ??
-    checkoutHostElement.dataset.initialConfiguration
+    checkoutHostElement.dataset.initialConfiguration ??
+    checkoutHostElement.getAttribute("initial-configuration")
   );
 }
 
