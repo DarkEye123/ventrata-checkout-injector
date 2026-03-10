@@ -6,7 +6,9 @@ import {
 } from "../checkoutMarkers";
 import { hasVentrataCheckoutScript, injectScript } from "./helpers";
 
-const IS_MAC_PLATFORM = navigator.platform.toLowerCase().includes("mac");
+const IS_MAC_PLATFORM = (navigator.userAgentData?.platform ?? navigator.platform)
+  .toLowerCase()
+  .includes("mac");
 const LEFT_MOUSE_BUTTON = 0;
 const RIGHT_MOUSE_BUTTON = 2;
 
