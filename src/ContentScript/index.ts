@@ -159,12 +159,16 @@ function messageHandler(message: AppMessage) {
 }
 
 function syncCheckoutScriptPresence() {
-  chrome.runtime.sendMessage({
-    name: "checkout-script-presence",
-    payload: {
-      hasCheckoutScript: hasVentrataCheckoutScript(),
-    },
-  } satisfies AppMessage);
+  void chrome.runtime
+    .sendMessage({
+      name: "checkout-script-presence",
+      payload: {
+        hasCheckoutScript: hasVentrataCheckoutScript(),
+      },
+    } satisfies AppMessage)
+    .catch(() => {
+      // The service worker may not be ready yet; tab activation will re-sync menu visibility later.
+    });
 }
 
 function observeCheckoutScriptPresence() {
