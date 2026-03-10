@@ -122,7 +122,7 @@ describe("content script copy configuration delivery", () => {
     infoSpy = vi.spyOn(console, "info").mockImplementation(() => undefined);
     warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     vi.spyOn(console, "log").mockImplementation(() => undefined);
-    runtimeSendMessageMock = vi.fn();
+    runtimeSendMessageMock = vi.fn(async () => undefined);
 
     Object.assign(window, {
       VentrataInjector: undefined,
@@ -258,7 +258,7 @@ describe("content script copy configuration delivery", () => {
     checkoutHost.append(originButton);
     document.body.append(checkoutHost);
 
-    dispatchMouseEvent("contextmenu", {
+    dispatchMouseEvent("mousedown", {
       button: 2,
       path: [originButton, checkoutHost, document.body, document.documentElement, document],
     });
