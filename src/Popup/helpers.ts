@@ -75,9 +75,7 @@ const handleGHAccessTokenUpdate = async (ghAccessToken: string) => {
 
 export {
   handleGHAccessTokenUpdate,
-  sendMessage,
   sendSaveAppStateMessage,
   sendGetAppStateMessage,
   readCurrentActiveTabId,
-  readAllPullRequestsNumbers,
 };

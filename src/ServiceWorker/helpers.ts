@@ -1,4 +1,4 @@
-import { ScriptReference, type AppStateMessage } from "../types";
+import { ScriptReference } from "../types";
 
 const LEGACY_DYNAMIC_RULE_IDS = [1, 2];
 const SESSION_RULE_ID_OFFSET = 100000;
@@ -64,12 +64,4 @@ async function clearTabRules(tabId: number) {
   });
 }
 
-function updateContentScript(port: chrome.runtime.Port, newState: AppStateMessage["payload"]) {
-  const stateMessage: AppStateMessage = {
-    name: "app-state",
-    payload: newState,
-  };
-  port.postMessage(stateMessage);
-}
-
-export { updateRules, clearTabRules, cleanupLegacyDynamicRules, updateContentScript };
+export { updateRules, clearTabRules, cleanupLegacyDynamicRules };
