@@ -37,7 +37,10 @@ function createContextMenuItem(createProperties: chrome.contextMenus.CreatePrope
   });
 }
 
-function updateContextMenuItem(id: string, updateProperties: chrome.contextMenus.UpdateProperties) {
+function updateContextMenuItem(
+  id: string,
+  updateProperties: Omit<chrome.contextMenus.CreateProperties, "id">,
+) {
   return new Promise<void>((resolve, reject) => {
     chrome.contextMenus.update(id, updateProperties, () => {
       if (chrome.runtime.lastError) {

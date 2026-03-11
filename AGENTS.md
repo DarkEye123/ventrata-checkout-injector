@@ -21,7 +21,13 @@ This project is a Chrome extension (Manifest V3) built with Svelte + TypeScript.
 - `npm run dev`: watch build for local development (multi-entry bundling).
 - `npm run build`: one production build into `dist/`.
 - `npm run check`: run `svelte-check` with the project TypeScript config.
+- `npm run lint`: run ESLint flat-config validation.
+- `npm run knip`: run unused file/export/dependency analysis.
 - `npm run release`: rebuild and package `dist/` into `ventrata-checkout-injector.zip`.
+
+## Tooling Reference
+
+- The current `knip` and ESLint setup in this repository is based on the checkout frontend repository: https://github.com/ventrata/checkout-frontend ... you can use this repository as a reference for how to set up other tools like prettier, vite tailwind, svelte and others.... You can also use it as reference how to do migrations.
 
 ## Commit & Pull Request Guidelines
 

@@ -11,4 +11,4 @@ function useAppStateSync() {
   };
 }
 
-export { useAppStateSync, type AppStateEvents };
+export { useAppStateSync };

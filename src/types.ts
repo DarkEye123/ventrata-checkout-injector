@@ -73,7 +73,6 @@ const ScriptReference = "?ref=ventrata-injector-extension";
 
 export {
   AppName,
-  type GenericMessage,
   ScriptReference,
   type AppMessage,
   type GetAppStateMessage,
@@ -85,6 +84,4 @@ export {
   type AppState,
   type AppStateMessage,
   type CheckoutContextState,
-  type CopyCheckoutConfigurationMessage,
-  type CheckoutScriptPresenceMessage,
 };

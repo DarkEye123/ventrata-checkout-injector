@@ -2,6 +2,16 @@
 
 Chrome extension for injecting alternative Ventrata checkout builds into real customer pages for QA and local development.
 
+## Static Analysis
+
+Use `knip` to check for unused files, exports, and dependencies:
+
+- `npm run knip`
+- `npm run knip:fix`
+- `npm run knip:watch`
+
+The current setup intentionally ignores `tailwind.config.cjs`, because Tailwind loads that file implicitly through the PostCSS integration and `knip` treats it as unused otherwise.
+
 ## Copy Configuration Menu
 
 The extension provides a native browser context-menu entry:
