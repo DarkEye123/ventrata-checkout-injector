@@ -45,7 +45,29 @@ interface AppStateMessage extends GenericMessage {
   payload: AppState;
 }
 
-type AppMessage = AppStateMessage | SaveAppStateMessage | GetAppStateMessage;
+interface CheckoutContextState {
+  hasCheckoutContext: boolean;
+  initialConfiguration?: string;
+  originTagName?: string;
+}
+
+interface CopyCheckoutConfigurationMessage extends GenericMessage {
+  name: "copy-checkout-configuration";
+}
+
+interface CheckoutScriptPresenceMessage extends GenericMessage {
+  name: "checkout-script-presence";
+  payload: {
+    hasCheckoutScript: boolean;
+  };
+}
+
+type AppMessage =
+  | AppStateMessage
+  | SaveAppStateMessage
+  | GetAppStateMessage
+  | CopyCheckoutConfigurationMessage
+  | CheckoutScriptPresenceMessage;
 
 const ScriptReference = "?ref=ventrata-injector-extension";
 
@@ -62,4 +84,7 @@ export {
   type CheckoutScriptConfigOverrides,
   type AppState,
   type AppStateMessage,
+  type CheckoutContextState,
+  type CopyCheckoutConfigurationMessage,
+  type CheckoutScriptPresenceMessage,
 };

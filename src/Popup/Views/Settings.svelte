@@ -38,7 +38,7 @@
 <Panel showBackButton>
   <section class="grid gap-6 rounded-lg border border-gray-200 p-4" id="github-token">
     <TextInput
-      fullSize
+      class="w-full"
       label="Your GH Access Token"
       error={ghAccessTokenError}
       bind:value={newAccessToken}
@@ -52,7 +52,9 @@
       class="justify-self-center"
       loading={isFetchingTokenData}
       disabled={!requestAccessButtonEnabled}
-      on:click={handleAccessTokenUpdate}>Request Access</Button
+      on:click={handleAccessTokenUpdate}
     >
+      Request Access
+    </Button>
   </section>
 </Panel>

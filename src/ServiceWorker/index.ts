@@ -1,9 +1,54 @@
 import { AppName, type AppMessage } from "../types";
+import { VENTRATA_PAGE_MARKER_SELECTORS } from "../checkoutMarkers";
 import { clearTabRules, updateRules } from "./helpers";
 import { runMigrations } from "./migrations";
 import { createStateMessage, deleteTabAppState, saveAppState } from "./state";
 
 console.log("executing service worker script");
+
+const COPY_CONFIGURATION_MENU_PARENT_ID = "ventrata-checkout-injector";
+const COPY_CONFIGURATION_MENU_ITEM_ID = "copy-configuration";
+let ensureContextMenuPromise: Promise<void> | null = null;
+const tabCheckoutScriptPresence = new Map<number, boolean>();
+
+function removeAllContextMenus() {
+  return new Promise<void>((resolve, reject) => {
+    chrome.contextMenus.removeAll(() => {
+      if (chrome.runtime.lastError) {
+        reject(new Error(chrome.runtime.lastError.message));
+        return;
+      }
+
+      resolve();
+    });
+  });
+}
+
+function createContextMenuItem(createProperties: chrome.contextMenus.CreateProperties) {
+  return new Promise<void>((resolve, reject) => {
+    chrome.contextMenus.create(createProperties, () => {
+      if (chrome.runtime.lastError) {
+        reject(new Error(chrome.runtime.lastError.message));
+        return;
+      }
+
+      resolve();
+    });
+  });
+}
+
+function updateContextMenuItem(id: string, updateProperties: chrome.contextMenus.UpdateProperties) {
+  return new Promise<void>((resolve, reject) => {
+    chrome.contextMenus.update(id, updateProperties, () => {
+      if (chrome.runtime.lastError) {
+        reject(new Error(chrome.runtime.lastError.message));
+        return;
+      }
+
+      resolve();
+    });
+  });
+}
 
 function getActionTabOptions(tabId: number | undefined) {
   return typeof tabId === "number" ? { tabId } : {};
@@ -52,8 +97,99 @@ async function syncActionIcon(tabId: number | undefined) {
   }
 }
 
+async function createContextMenu() {
+  await removeAllContextMenus();
+  await createContextMenuItem({
+    id: COPY_CONFIGURATION_MENU_PARENT_ID,
+    title: "Ventrata Checkout Injector",
+    contexts: ["all"],
+    visible: false,
+  });
+  await createContextMenuItem({
+    id: COPY_CONFIGURATION_MENU_ITEM_ID,
+    title: "Copy configuration",
+    contexts: ["all"],
+    parentId: COPY_CONFIGURATION_MENU_PARENT_ID,
+    visible: false,
+  });
+}
+
+async function ensureContextMenu() {
+  if (ensureContextMenuPromise) {
+    await ensureContextMenuPromise;
+    return;
+  }
+
+  ensureContextMenuPromise = (async () => {
+    try {
+      await createContextMenu();
+    } catch (error) {
+      console.warn("Service Worker::failed to create context menu", error);
+    } finally {
+      ensureContextMenuPromise = null;
+    }
+  })();
+
+  await ensureContextMenuPromise;
+}
+
 function isInjectableTabUrl(url?: string) {
   return typeof url === "string" && /^https?:\/\//.test(url);
+}
+
+async function detectCheckoutScriptPresence(tabId: number) {
+  try {
+    const tab = await chrome.tabs.get(tabId);
+    if (!isInjectableTabUrl(tab.url)) {
+      return false;
+    }
+
+    const [result] = await chrome.scripting.executeScript({
+      target: { tabId },
+      args: [VENTRATA_PAGE_MARKER_SELECTORS],
+      func: (selectors) => {
+        return selectors.some((selector) => document.querySelector(selector));
+      },
+    });
+
+    return result?.result === true;
+  } catch (error) {
+    console.warn("Service Worker::failed to detect checkout script presence", {
+      tabId,
+      error,
+    });
+    return false;
+  }
+}
+
+async function setContextMenuVisibility(isVisible: boolean) {
+  try {
+    await updateContextMenuItem(COPY_CONFIGURATION_MENU_PARENT_ID, {
+      visible: isVisible,
+    });
+    await updateContextMenuItem(COPY_CONFIGURATION_MENU_ITEM_ID, {
+      visible: isVisible,
+    });
+  } catch (error) {
+    console.warn("Service Worker::failed to update context menu visibility", error);
+  }
+}
+
+async function syncContextMenuVisibilityForTab(tabId: number | undefined) {
+  if (typeof tabId !== "number") {
+    await setContextMenuVisibility(false);
+    return;
+  }
+
+  const cachedCheckoutScriptPresence = tabCheckoutScriptPresence.get(tabId);
+  if (cachedCheckoutScriptPresence !== undefined) {
+    await setContextMenuVisibility(cachedCheckoutScriptPresence);
+    return;
+  }
+
+  const hasCheckoutScript = await detectCheckoutScriptPresence(tabId);
+  tabCheckoutScriptPresence.set(tabId, hasCheckoutScript);
+  await setContextMenuVisibility(hasCheckoutScript);
 }
 
 async function injectTabScripts(tabId: number) {
@@ -78,6 +214,18 @@ async function injectTabScripts(tabId: number) {
       error,
     });
   }
+}
+
+async function injectOpenTabs() {
+  const tabs = await chrome.tabs.query({});
+
+  await Promise.all(
+    tabs.map(async (tab) => {
+      if (typeof tab.id === "number") {
+        await injectTabScripts(tab.id);
+      }
+    }),
+  );
 }
 
 function createPopupMessageHandler(port: chrome.runtime.Port) {
@@ -111,6 +259,33 @@ function createPopupMessageHandler(port: chrome.runtime.Port) {
   };
 }
 
+chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+  if (info.menuItemId !== COPY_CONFIGURATION_MENU_ITEM_ID || typeof tab?.id !== "number") {
+    return;
+  }
+
+  try {
+    await chrome.tabs.sendMessage(tab.id, {
+      name: "copy-checkout-configuration",
+    } satisfies AppMessage);
+  } catch (error) {
+    console.warn("Service Worker::failed to send copy configuration message", {
+      tabId: tab.id,
+      error,
+    });
+  }
+});
+
+chrome.runtime.onInstalled.addListener(() => {
+  void ensureContextMenu();
+  void injectOpenTabs();
+});
+
+chrome.runtime.onStartup.addListener(() => {
+  void ensureContextMenu();
+  void injectOpenTabs();
+});
+
 // TODO rethink if it is really needed to update popup and content script by their ports, it seems that it is not needed at the end
 chrome.runtime.onConnect.addListener(async (port) => {
   console.log("Service Worker::onConnect", port);
@@ -137,6 +312,29 @@ chrome.runtime.onConnect.addListener(async (port) => {
   }
 });
 
+chrome.runtime.onMessage.addListener((message: AppMessage, sender) => {
+  if (message.name !== "checkout-script-presence") {
+    return;
+  }
+
+  const tabId = sender.tab?.id;
+  if (typeof tabId !== "number") {
+    return;
+  }
+
+  tabCheckoutScriptPresence.set(tabId, message.payload.hasCheckoutScript);
+  void chrome.tabs
+    .query({
+      active: true,
+      lastFocusedWindow: true,
+    })
+    .then(([activeTab]) => {
+      if (activeTab?.id === tabId) {
+        return syncContextMenuVisibilityForTab(tabId);
+      }
+    });
+});
+
 async function init() {
   try {
     await runMigrations();
@@ -152,17 +350,38 @@ async function init() {
     const { tabId } = tab;
     await injectTabScripts(tabId);
     await syncActionIcon(tabId);
+    await syncContextMenuVisibilityForTab(tabId);
   });
 
   chrome.tabs.onUpdated.addListener(async (tabId, changeInfo) => {
     if (!changeInfo.status && !changeInfo.url) {
       return;
     }
+
+    if (changeInfo.url) {
+      tabCheckoutScriptPresence.delete(tabId);
+
+      const [activeTab] = await chrome.tabs.query({
+        active: true,
+        lastFocusedWindow: true,
+      });
+
+      if (activeTab?.id === tabId) {
+        await setContextMenuVisibility(false);
+      }
+    }
+
+    if (changeInfo.status !== "complete") {
+      return;
+    }
+
     await injectTabScripts(tabId);
     await syncActionIcon(tabId);
+    await syncContextMenuVisibilityForTab(tabId);
   });
 
   chrome.tabs.onRemoved.addListener(async (tabId) => {
+    tabCheckoutScriptPresence.delete(tabId);
     await deleteTabAppState(tabId);
     await clearTabRules(tabId);
   });
@@ -171,6 +390,7 @@ async function init() {
     if (tab.id) {
       await injectTabScripts(tab.id);
       await syncActionIcon(tab.id);
+      await syncContextMenuVisibilityForTab(tab.id);
     }
   });
 }

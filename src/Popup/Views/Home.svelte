@@ -74,38 +74,43 @@
           }
         }}
       />
-      <Switch
-        class="w-full justify-self-center"
-        size="md"
-        onLabel="ON"
-        offLabel="OFF"
-        color="green"
-        label="Extension"
-        checked={$stateStore.extensionIsActive}
-        on:change={() => {
-          $stateStore.extensionIsActive = !$stateStore.extensionIsActive;
-          appStateSyncReady();
-        }}
-      />
-      <Switch
-        class="w-full justify-self-center [&_input]:h-2"
-        size="md"
-        onLabel="ON"
-        offLabel="OFF"
-        color="blue"
-        label="Test mode"
-        checked={$stateStore.checkoutScriptConfigOverrides?.env === "test"}
-        on:change={() => {
-          $stateStore.checkoutScriptConfigOverrides = {
-            ...($stateStore.checkoutScriptConfigOverrides ?? { env: "live" }),
-            env:
-              ($stateStore.checkoutScriptConfigOverrides?.env ?? "live") === "test"
-                ? "live"
-                : "test",
-          };
-          appStateSyncReady();
-        }}
-      />
+
+      <div class="w-full justify-center">
+        <Switch
+          class="[&_input]:h-2"
+          size="md"
+          onLabel="ON"
+          offLabel="OFF"
+          color="blue"
+          label="Test mode"
+          checked={$stateStore.checkoutScriptConfigOverrides?.env === "test"}
+          on:change={() => {
+            $stateStore.checkoutScriptConfigOverrides = {
+              ...($stateStore.checkoutScriptConfigOverrides ?? { env: "live" }),
+              env:
+                ($stateStore.checkoutScriptConfigOverrides?.env ?? "live") === "test"
+                  ? "live"
+                  : "test",
+            };
+            appStateSyncReady();
+          }}
+        />
+      </div>
+
+      <div class="w-full justify-center">
+        <Switch
+          size="md"
+          onLabel="ON"
+          offLabel="OFF"
+          color="green"
+          label="Extension"
+          checked={$stateStore.extensionIsActive}
+          on:change={() => {
+            $stateStore.extensionIsActive = !$stateStore.extensionIsActive;
+            appStateSyncReady();
+          }}
+        />
+      </div>
     </div>
   </section>
 </Panel>

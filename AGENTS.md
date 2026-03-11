@@ -67,3 +67,5 @@ Track larger changes as GitHub feature-request issues before implementation.
   - this is acceptable because an invalid checkout configuration is already considered customer-visible checkout failure
 - QA intent of this extension is to test new releases, PR builds, or local checkout code on running customer sites while preserving their real environment context (`env`) and integration behavior before release.
 - Ventrata demo sites remain useful for targeted flows and edge-case validation, but they do not fully represent real customer environments; this extension exists to make customer-like flow verification easier to reach.
+- Treat `ventrata-checkout.min.js`, `ventrata-checkout-element`, `ventrata-embedded-widget`, `ventrata-checkout`, and `ventrata-manage-my-booking` as Ventrata integration markers when reasoning about menu visibility or page detection.
+- If runtime behavior does not match the edited files, first verify that Chrome is loading the unpacked extension from the correct worktree `dist` directory rather than another branch or `master`.
