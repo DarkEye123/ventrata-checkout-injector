@@ -17,6 +17,7 @@ const config: KnipConfig = {
   vitest: {
     entry: ["tests/**/*.{spec,test}.ts"],
   },
+  ignoreDependencies: ["@types/chrome"],
   ignore: ["tailwind.config.cjs"],
   svelte: true,
   typescript: {
