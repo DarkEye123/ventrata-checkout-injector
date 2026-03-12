@@ -16,9 +16,4 @@ function hasVentrataPageMarkers(root: ParentNode) {
   return VENTRATA_PAGE_MARKER_SELECTORS.some((selector) => root.querySelector(selector));
 }
 
-export {
-  VENTRATA_CHECKOUT_ELEMENT_TAG,
-  VENTRATA_PAGE_MARKER_ATTRIBUTES,
-  VENTRATA_PAGE_MARKER_SELECTORS,
-  hasVentrataPageMarkers,
-};
+export { VENTRATA_CHECKOUT_ELEMENT_TAG, VENTRATA_PAGE_MARKER_ATTRIBUTES, hasVentrataPageMarkers };

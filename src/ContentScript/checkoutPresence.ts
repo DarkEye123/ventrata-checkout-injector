@@ -51,4 +51,4 @@ function initCheckoutPresenceSync() {
   observeCheckoutScriptPresence();
 }
 
-export { initCheckoutPresenceSync, observeCheckoutScriptPresence, syncCheckoutScriptPresence };
+export { initCheckoutPresenceSync };
