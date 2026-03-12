@@ -12,6 +12,12 @@ Use `knip` to check for unused files, exports, and dependencies:
 
 The current setup intentionally ignores `tailwind.config.cjs`, because Tailwind loads that file implicitly through the PostCSS integration and `knip` treats it as unused otherwise.
 
+## Testing
+
+Unit tests are colocated with the source modules they cover under `src/` and run via:
+
+- `npm test`
+
 ## Copy Configuration Menu
 
 The extension provides a native browser context-menu entry:
@@ -32,13 +38,15 @@ Use either action on an element inside a checkout widget:
 
 The extension copies the exact `data-initial-configuration` value from the nearest enclosing `ventrata-checkout-element`.
 
+If no checkout configuration is resolved for the triggered action, the extension intentionally copies the literal string `"undefined"` instead of skipping the copy.
+
 The context-menu entry is intended for pages that expose Ventrata checkout markers, such as:
 
 - the checkout script URL containing `ventrata-checkout.min.js`
 - the `ventrata-checkout-element` web component
 - integration trigger markers like `ventrata-embedded-widget`, `ventrata-checkout`, or `ventrata-manage-my-booking`
 
-Copying still only happens when the clicked element belongs to a `ventrata-checkout-element`.
+Menu visibility is driven by content-script presence reporting after the page initializes.
 
 ## Troubleshooting
 

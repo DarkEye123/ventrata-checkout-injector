@@ -68,17 +68,17 @@ const saveAppStateMock = vi.fn(async () => undefined);
 const clearTabRulesMock = vi.fn(async () => undefined);
 const updateRulesMock = vi.fn(async () => undefined);
 
-vi.mock("../src/ServiceWorker/migrations", () => ({
+vi.mock("./migrations", () => ({
   runMigrations: runMigrationsMock,
 }));
 
-vi.mock("../src/ServiceWorker/state", () => ({
+vi.mock("./state", () => ({
   createStateMessage: createStateMessageMock,
   deleteTabAppState: deleteTabAppStateMock,
   saveAppState: saveAppStateMock,
 }));
 
-vi.mock("../src/ServiceWorker/helpers", () => ({
+vi.mock("./helpers", () => ({
   clearTabRules: clearTabRulesMock,
   updateRules: updateRulesMock,
 }));
@@ -91,9 +91,9 @@ describe("service worker copy configuration delivery", () => {
   let onRuntimeMessage: ChromeEventMock<
     [unknown, chrome.runtime.MessageSender, ((response?: unknown) => void)?]
   >;
-  let onActivated: ChromeEventMock<[chrome.tabs.TabActiveInfo]>;
-  let onUpdated: ChromeEventMock<[number, chrome.tabs.TabChangeInfo, chrome.tabs.Tab]>;
-  let onRemoved: ChromeEventMock<[number, chrome.tabs.TabRemoveInfo]>;
+  let onActivated: ChromeEventMock<[{ tabId: number; windowId: number }]>;
+  let onUpdated: ChromeEventMock<[number, { status?: string; url?: string }, chrome.tabs.Tab]>;
+  let onRemoved: ChromeEventMock<[number, { isWindowClosing?: boolean; windowId?: number }]>;
 
   let tabsQueryMock: ReturnType<typeof vi.fn>;
   let tabsGetMock: ReturnType<typeof vi.fn>;
@@ -106,7 +106,6 @@ describe("service worker copy configuration delivery", () => {
   let reloadTabMock: ReturnType<typeof vi.fn>;
   let warnSpy: ReturnType<typeof vi.spyOn>;
   let activeLastFocusedTabId: number | undefined;
-  let detectedCheckoutTabs: Map<number, boolean>;
 
   beforeEach(async () => {
     vi.resetModules();
@@ -121,7 +120,6 @@ describe("service worker copy configuration delivery", () => {
     onUpdated = createChromeEventMock();
     onRemoved = createChromeEventMock();
     activeLastFocusedTabId = 99;
-    detectedCheckoutTabs = new Map([[11, true]]);
 
     tabsQueryMock = vi.fn(async (queryInfo?: chrome.tabs.QueryInfo) => {
       if (queryInfo?.active && queryInfo?.lastFocusedWindow) {
@@ -148,33 +146,16 @@ describe("service worker copy configuration delivery", () => {
       return { id: tabId, url: "https://customer.example/checkout" };
     });
 
-    executeScriptMock = vi.fn(
-      async (options: chrome.scripting.ScriptInjection<unknown[], unknown>) => {
-        if ("func" in options) {
-          return [{ result: detectedCheckoutTabs.get(options.target.tabId) ?? false }];
-        }
-
-        return undefined;
-      },
-    );
+    executeScriptMock = vi.fn(async () => undefined);
     sendMessageMock = vi.fn(async () => undefined);
     createMenuMock = vi.fn(
       (properties: chrome.contextMenus.CreateProperties, callback?: () => void) => {
         callback?.();
+        return properties.id ?? "menu-id";
       },
     );
-    updateMenuMock = vi.fn(
-      (
-        _menuItemId: string,
-        _updateProperties: chrome.contextMenus.UpdateProperties,
-        callback?: () => void,
-      ) => {
-        callback?.();
-      },
-    );
-    removeAllMenusMock = vi.fn((callback?: () => void) => {
-      callback?.();
-    });
+    updateMenuMock = vi.fn(async () => undefined);
+    removeAllMenusMock = vi.fn(async () => undefined);
     setIconMock = vi.fn(async () => undefined);
     reloadTabMock = vi.fn();
     warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
@@ -213,7 +194,7 @@ describe("service worker copy configuration delivery", () => {
       },
     });
 
-    await import("../src/ServiceWorker/index");
+    await import("./index");
     await flushPromises();
     vi.clearAllMocks();
   });
@@ -261,20 +242,12 @@ describe("service worker copy configuration delivery", () => {
     );
     await flushPromises();
 
-    expect(updateMenuMock).toHaveBeenCalledWith(
-      "ventrata-checkout-injector",
-      {
-        visible: true,
-      },
-      expect.any(Function),
-    );
-    expect(updateMenuMock).toHaveBeenCalledWith(
-      "copy-configuration",
-      {
-        visible: true,
-      },
-      expect.any(Function),
-    );
+    expect(updateMenuMock).toHaveBeenCalledWith("ventrata-checkout-injector", {
+      visible: true,
+    });
+    expect(updateMenuMock).toHaveBeenCalledWith("copy-configuration", {
+      visible: true,
+    });
   });
 
   it("injects open tabs on install and skips non-http tabs", async () => {
@@ -282,11 +255,7 @@ describe("service worker copy configuration delivery", () => {
     await flushPromises();
 
     expect(tabsQueryMock).toHaveBeenCalledWith({});
-    const injectionCalls = executeScriptMock.mock.calls
-      .map(([call]) => call)
-      .filter((call) => "files" in call);
-
-    expect(injectionCalls).toEqual([
+    expect(executeScriptMock.mock.calls.map(([call]) => call)).toEqual([
       {
         target: { tabId: 11 },
         files: ["./pageHook.js"],
@@ -299,44 +268,32 @@ describe("service worker copy configuration delivery", () => {
     ]);
   });
 
-  it("detects Ventrata page markers before showing the menu for the active tab", async () => {
+  it("keeps the menu hidden on tab activation until the content script reports presence", async () => {
     activeLastFocusedTabId = 11;
+
     await onActivated.dispatch({ tabId: 11, windowId: 1 });
     await flushPromises();
 
-    expect(executeScriptMock).toHaveBeenCalledWith({
-      target: { tabId: 11 },
-      args: [expect.any(Array)],
-      func: expect.any(Function),
+    expect(updateMenuMock).toHaveBeenCalledWith("ventrata-checkout-injector", {
+      visible: false,
     });
-    expect(updateMenuMock).toHaveBeenCalledWith(
-      "ventrata-checkout-injector",
-      {
-        visible: true,
-      },
-      expect.any(Function),
-    );
-    expect(updateMenuMock).toHaveBeenCalledWith(
-      "copy-configuration",
-      {
-        visible: true,
-      },
-      expect.any(Function),
-    );
+    expect(updateMenuMock).toHaveBeenCalledWith("copy-configuration", {
+      visible: false,
+    });
   });
 
-  it("uses cached false checkout-script presence without re-detecting the active tab", async () => {
+  it("uses cached checkout presence for subsequent active-tab visibility sync", async () => {
     activeLastFocusedTabId = 11;
 
     await onRuntimeMessage.dispatch(
       {
         name: "checkout-script-presence",
         payload: {
-          hasCheckoutScript: false,
+          hasCheckoutScript: true,
         },
       },
       {
-        tab: createTab(11, "https://customer.example/plain-page"),
+        tab: createTab(11),
       },
       undefined,
     );
@@ -346,36 +303,19 @@ describe("service worker copy configuration delivery", () => {
     await onActivated.dispatch({ tabId: 11, windowId: 1 });
     await flushPromises();
 
-    const detectionCalls = executeScriptMock.mock.calls
-      .map(([call]) => call)
-      .filter((call) => "func" in call);
-
-    expect(detectionCalls).toEqual([]);
-    expect(updateMenuMock).toHaveBeenCalledWith(
-      "ventrata-checkout-injector",
-      {
-        visible: false,
-      },
-      expect.any(Function),
-    );
-    expect(updateMenuMock).toHaveBeenCalledWith(
-      "copy-configuration",
-      {
-        visible: false,
-      },
-      expect.any(Function),
-    );
+    expect(updateMenuMock).toHaveBeenCalledWith("ventrata-checkout-injector", {
+      visible: true,
+    });
+    expect(updateMenuMock).toHaveBeenCalledWith("copy-configuration", {
+      visible: true,
+    });
   });
 
   it("sends the copy message for the clicked tab without reinjecting scripts", async () => {
     await onClicked.dispatch(createContextMenuClickData("copy-configuration"), createTab(77));
     await flushPromises();
 
-    const injectionCalls = executeScriptMock.mock.calls
-      .map(([call]) => call)
-      .filter((call) => "files" in call);
-
-    expect(injectionCalls).toEqual([]);
+    expect(executeScriptMock).not.toHaveBeenCalled();
     expect(sendMessageMock).toHaveBeenCalledWith(77, {
       name: "copy-checkout-configuration",
     });
@@ -425,36 +365,20 @@ describe("service worker copy configuration delivery", () => {
     await onUpdated.dispatch(11, { url: "https://customer.example/new-page" }, createTab(11));
     await flushPromises();
 
-    const fileInjectionCallsBeforeComplete = executeScriptMock.mock.calls
-      .map(([call]) => call)
-      .filter((call) => "files" in call);
-
-    expect(fileInjectionCallsBeforeComplete).toEqual([]);
-    expect(updateMenuMock).toHaveBeenCalledWith(
-      "ventrata-checkout-injector",
-      {
-        visible: false,
-      },
-      expect.any(Function),
-    );
-    expect(updateMenuMock).toHaveBeenCalledWith(
-      "copy-configuration",
-      {
-        visible: false,
-      },
-      expect.any(Function),
-    );
+    expect(executeScriptMock).toEqual(expect.any(Function));
+    expect(updateMenuMock).toHaveBeenCalledWith("ventrata-checkout-injector", {
+      visible: false,
+    });
+    expect(updateMenuMock).toHaveBeenCalledWith("copy-configuration", {
+      visible: false,
+    });
 
     vi.clearAllMocks();
 
     await onUpdated.dispatch(11, { status: "complete" }, createTab(11));
     await flushPromises();
 
-    const fileInjectionCallsAfterComplete = executeScriptMock.mock.calls
-      .map(([call]) => call)
-      .filter((call) => "files" in call);
-
-    expect(fileInjectionCallsAfterComplete).toEqual([
+    expect(executeScriptMock.mock.calls.map(([call]) => call)).toEqual([
       {
         target: { tabId: 11 },
         files: ["./pageHook.js"],
@@ -465,71 +389,11 @@ describe("service worker copy configuration delivery", () => {
         files: ["./contentScript.js"],
       },
     ]);
-  });
-
-  it("keeps the menu hidden after navigation completes on a non-marker page", async () => {
-    activeLastFocusedTabId = 11;
-
-    await onRuntimeMessage.dispatch(
-      {
-        name: "checkout-script-presence",
-        payload: {
-          hasCheckoutScript: true,
-        },
-      },
-      {
-        tab: createTab(11),
-      },
-      undefined,
-    );
-    await flushPromises();
-    vi.clearAllMocks();
-
-    detectedCheckoutTabs.set(11, false);
-
-    await onUpdated.dispatch(11, { url: "https://customer.example/plain-page" }, createTab(11));
-    await flushPromises();
-    await onUpdated.dispatch(11, { status: "complete" }, createTab(11));
-    await flushPromises();
-
-    expect(updateMenuMock).toHaveBeenCalledWith(
-      "ventrata-checkout-injector",
-      {
-        visible: false,
-      },
-      expect.any(Function),
-    );
-    expect(updateMenuMock).toHaveBeenCalledWith(
-      "copy-configuration",
-      {
-        visible: false,
-      },
-      expect.any(Function),
-    );
-  });
-
-  it("shows the menu again after navigation completes on a marker page", async () => {
-    activeLastFocusedTabId = 11;
-    detectedCheckoutTabs.set(11, true);
-
-    await onUpdated.dispatch(11, { url: "https://customer.example/checkout" }, createTab(11));
-    await flushPromises();
-    await onUpdated.dispatch(11, { status: "complete" }, createTab(11));
-    await flushPromises();
-
-    expect(updateMenuMock).toHaveBeenCalledWith(
-      "ventrata-checkout-injector",
-      {
-        visible: true,
-      },
-      expect.any(Function),
-    );
-    expect(updateMenuMock).toHaveBeenCalledWith(
-      "copy-configuration",
-      {
-        visible: true,
-      },
-      expect.any(Function),
-    );
+    expect(updateMenuMock).toHaveBeenCalledWith("ventrata-checkout-injector", {
+      visible: false,
+    });
+    expect(updateMenuMock).toHaveBeenCalledWith("copy-configuration", {
+      visible: false,
+    });
   });
 });
