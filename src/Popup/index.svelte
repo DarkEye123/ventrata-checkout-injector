@@ -72,10 +72,11 @@
 
   let activeView: ViewComponent;
   $: activeViewMap = viewMap[$currentViewName];
-  $: activeViewFn = activeViewMap.default;
-  $: activeViewFn().then((view) => {
-    activeView = view.default;
-  });
+  if (activeViewMap) {
+    activeViewMap.default().then((view) => {
+      activeView = view.default;
+    });
+  }
 
   onMount(() => {
     init();
@@ -84,19 +85,21 @@
 
 {#if canRender}
   <nav class="absolute right-4 top-2">
-    {#each activeViewMap.navigationList as navigationItem}
-      <Button
-        override={{ fontSize: "8px", textTransform: "uppercase" }}
-        variant="subtle"
-        color="indigo"
-        size="xs"
-        compact
-        uppercase
-        ripple
-        on:click={() => currentViewName.set(navigationItem)}
-      >
-        {navigationItem}
-      </Button>
+    {#each activeViewMap.navigationList as navigationItem, index (index)}
+      <div>
+        <Button
+          override={{ fontSize: "8px", textTransform: "uppercase" }}
+          variant="subtle"
+          color="indigo"
+          size="xs"
+          compact
+          uppercase
+          ripple
+          on:click={() => currentViewName.set(navigationItem)}
+        >
+          {navigationItem}
+        </Button>
+      </div>
     {/each}
   </nav>
   <svelte:component

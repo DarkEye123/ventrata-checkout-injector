@@ -74,7 +74,6 @@ export default [
     },
     rules: {
       "svelte/infinite-reactive-loop": "off",
-      "svelte/require-each-key": "off",
     },
   },
   {
