@@ -7,6 +7,7 @@ This project is a Chrome extension (Manifest V3) built with Svelte + TypeScript.
 - `src/ContentScript/`: content script entry and DOM injection helpers.
 - `src/ServiceWorker/`: background service worker, message handling, and extension state sync.
 - `src/Popup/`: popup UI (`Views/`, `stores/`, `hooks/`, `icons/`).
+- colocate tests with the source modules they cover under `src/`.
 - `src/types.ts`, `src/commonUtils.ts`: shared types and cross-module helpers.
 - `public/manifest.json` and `public/assets/`: extension manifest and static assets.
 - `dist/`: generated build output (do not edit manually).
@@ -20,6 +21,7 @@ This project is a Chrome extension (Manifest V3) built with Svelte + TypeScript.
 
 - `npm run dev`: watch build for local development (multi-entry bundling).
 - `npm run build`: one production build into `dist/`.
+- `npm test`: run colocated Vitest unit tests under `src/`.
 - `npm run check`: run `svelte-check` with the project TypeScript config.
 - `npm run lint`: run ESLint flat-config validation.
 - `npm run knip`: run unused file/export/dependency analysis.
@@ -74,4 +76,5 @@ Track larger changes as GitHub feature-request issues before implementation.
 - QA intent of this extension is to test new releases, PR builds, or local checkout code on running customer sites while preserving their real environment context (`env`) and integration behavior before release.
 - Ventrata demo sites remain useful for targeted flows and edge-case validation, but they do not fully represent real customer environments; this extension exists to make customer-like flow verification easier to reach.
 - Treat `ventrata-checkout.min.js`, `ventrata-checkout-element`, `ventrata-embedded-widget`, `ventrata-checkout`, and `ventrata-manage-my-booking` as Ventrata integration markers when reasoning about menu visibility or page detection.
+- Prefer current browser APIs for the latest 2 browser releases; do not keep legacy compatibility wrappers without a concrete reason.
 - If runtime behavior does not match the edited files, first verify that Chrome is loading the unpacked extension from the correct worktree `dist` directory rather than another branch or `master`.

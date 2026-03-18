@@ -45,12 +45,6 @@ interface AppStateMessage extends GenericMessage {
   payload: AppState;
 }
 
-interface CheckoutContextState {
-  hasCheckoutContext: boolean;
-  initialConfiguration?: string;
-  originTagName?: string;
-}
-
 interface CopyCheckoutConfigurationMessage extends GenericMessage {
   name: "copy-checkout-configuration";
 }
@@ -83,5 +77,4 @@ export {
   type CheckoutScriptConfigOverrides,
   type AppState,
   type AppStateMessage,
-  type CheckoutContextState,
 };

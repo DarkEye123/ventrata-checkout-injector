@@ -10,12 +10,11 @@ const config: KnipConfig = {
   ],
   project: [
     "src/**/*.{ts,js,svelte,css,html}",
-    "tests/**/*.{ts,js}",
     "public/**/*.{json,png,jpg,jpeg,svg,webp}",
     "tailwind.config.cjs",
   ],
   vitest: {
-    entry: ["tests/**/*.{spec,test}.ts"],
+    entry: ["src/**/*.{spec,test}.ts"],
   },
   ignoreDependencies: ["@types/chrome"],
   ignore: ["tailwind.config.cjs"],
