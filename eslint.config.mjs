@@ -23,7 +23,7 @@ export default [
       "**/.DS_Store",
       "**/node_modules",
       "dist",
-      "worktrees",
+      "**/worktrees/**",
       "**/*.css",
       "**/*.html",
       "**/package-lock.json",
@@ -71,6 +71,10 @@ export default [
         ...globals.worker,
         ...globals.webextensions,
       },
+    },
+    rules: {
+      "svelte/infinite-reactive-loop": "off",
+      "svelte/require-each-key": "off",
     },
   },
   {
