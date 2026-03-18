@@ -72,11 +72,10 @@
 
   let activeView: ViewComponent;
   $: activeViewMap = viewMap[$currentViewName];
-  if (activeViewMap) {
-    activeViewMap.default().then((view) => {
-      activeView = view.default;
-    });
-  }
+  $: activeViewFn = activeViewMap.default;
+  $: activeViewFn().then((view) => {
+    activeView = view.default;
+  });
 
   onMount(() => {
     init();
